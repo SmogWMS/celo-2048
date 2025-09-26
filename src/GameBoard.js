@@ -12,7 +12,7 @@ const addRandomTile = (grid) => {
     return grid;
 };
 
-export default function GameBoard({ account, contract, setLeaderboard }) {
+export default function GameBoard({ account, contract, setLeaderboard, connectWallet }) {
     const [grid, setGrid] = useState(addRandomTile(addRandomTile(emptyGrid())));
     const [score, setScore] = useState(0);
     const [timer, setTimer] = useState(0);
@@ -122,15 +122,33 @@ export default function GameBoard({ account, contract, setLeaderboard }) {
 
         try {
             await switchToCeloSepolia();
+
+            // Envoie de la transaction
             await contract.methods.saveScore(score, timer).send({ from: account });
-            const data = await contract.methods.getLeaderboard().call();
-            const formatted = data.map(d => ({ player: d.player, score: d.score, time: d.time }));
-            setLeaderboard(formatted);
+
+            // Mise à jour du leaderboard après sauvegarde
+            const bestRaw = await contract.methods.getBestScores().call();
+            const totalRaw = await contract.methods.getTotalScores().call();
+
+            const bestScores = bestRaw[0].map((_, i) => ({
+                player: bestRaw[0][i],
+                score: parseInt(bestRaw[1][i]),
+                time: parseInt(bestRaw[2][i])
+            }));
+
+            const totalScores = totalRaw[0].map((_, i) => ({
+                player: totalRaw[0][i],
+                scoreTotal: parseInt(totalRaw[1][i]),
+                gamesPlayed: parseInt(totalRaw[2][i])
+            }));
+
+            setLeaderboard({ bestScores, totalScores });
         } catch (e) {
             console.error(e);
             alert("Erreur lors de la sauvegarde : " + (e.message || e));
         }
     };
+
 
     return (
         <>
@@ -154,15 +172,40 @@ export default function GameBoard({ account, contract, setLeaderboard }) {
                             marginTop: "15px",
                             marginRight: "10px"
                         }}>Rejouer</button>
-                        <button onClick={saveScoreOnChain} style={{
-                            padding: "10px 20px",
-                            backgroundColor: "#f5b700",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            marginTop: "15px"
-                        }}>Sauvegarder</button>
+
+                        {!account && (
+                            <button
+                                onClick={async () => {
+                                    await connectWallet(); // se connecter
+                                    if (account && contract) {
+                                        await saveScoreOnChain(); // puis sauvegarder
+                                    }
+                                }}
+                                style={{
+                                    padding: "10px 20px",
+                                    backgroundColor: "#3498db",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    cursor: "pointer",
+                                    marginTop: "15px"
+                                }}
+                            >
+                                Connecter et sauvegarder
+                            </button>
+                        )}
+
+                        {account && (
+                            <button onClick={saveScoreOnChain} style={{
+                                padding: "10px 20px",
+                                backgroundColor: "#f5b700",
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                                marginTop: "15px"
+                            }}>Sauvegarder</button>
+                        )}
                     </div>
                 </div>
             )}
