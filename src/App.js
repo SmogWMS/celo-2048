@@ -145,16 +145,21 @@ export default function App() {
       const bestRaw = await readOnlyContract.methods.getBestScores().call();
       const totalRaw = await readOnlyContract.methods.getTotalScores().call();
 
-      const bestScores = bestRaw[0].map((_, i) => ({
+      let bestScores = bestRaw[0].map((_, i) => ({
         player: bestRaw[0][i],
         score: parseInt(bestRaw[1][i]),
         time: parseInt(bestRaw[2][i])
       }));
-      const totalScores = totalRaw[0].map((_, i) => ({
+
+      let totalScores = totalRaw[0].map((_, i) => ({
         player: totalRaw[0][i],
         scoreTotal: parseInt(totalRaw[1][i]),
         gamesPlayed: parseInt(totalRaw[2][i])
       }));
+
+      // Tri du plus grand au plus petit
+      bestScores.sort((a, b) => b.score - a.score);
+      totalScores.sort((a, b) => b.scoreTotal - a.scoreTotal);
 
       setLeaderboardData({ bestScores, totalScores });
       setShowLeaderboard(true);
@@ -164,6 +169,7 @@ export default function App() {
       setShowLeaderboard(true);
     }
   };
+
 
   return (
     <div style={{
