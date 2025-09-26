@@ -77,13 +77,19 @@ export default function GameBoard() {
   });
 
   return (
-    <div className="flex flex-col items-center">
-      <p className="mb-4 text-lg font-bold">Score: {score}</p>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${SIZE}, 80px)`, gap: "8px" }}>
-        {grid.map((row, i) =>
-          row.map((val, j) => <Tile key={`${i}-${j}`} value={val} />)
-        )}
-      </div>
-    </div>
+    <div style={{
+  display: "grid",
+  gridTemplateColumns: `repeat(${SIZE}, 80px)`,
+  gap: "10px",
+  backgroundColor: "#fff8e1",
+  padding: "16px",
+  borderRadius: "12px",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
+}}>
+  {grid.map((row, i) =>
+    row.map((val, j) => <Tile key={`${i}-${j}`} value={val} />)
+  )}
+</div>
+
   );
 }
