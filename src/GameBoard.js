@@ -3,8 +3,7 @@ import Tile from "./Tile";
 
 const SIZE = 4;
 
-const emptyGrid = () =>
-  Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+const emptyGrid = () => Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
 
 const addRandomTile = (grid) => {
   const emptyCells = [];
@@ -12,28 +11,28 @@ const addRandomTile = (grid) => {
     row.forEach((cell, j) => { if (cell === 0) emptyCells.push([i, j]); })
   );
   if (emptyCells.length === 0) return grid;
-
   const [x, y] = emptyCells[Math.floor(Math.random() * emptyCells.length)];
   grid[x][y] = Math.random() < 0.9 ? 2 : 4;
   return grid;
 };
 
-export default function GameBoard() {
+export default function GameBoard({ setScore }) {
   const [grid, setGrid] = useState(addRandomTile(addRandomTile(emptyGrid())));
-  const [score, setScore] = useState(0);
 
   const slideLeft = (grid) => {
     let newGrid = grid.map((row) => {
       let arr = row.filter((val) => val !== 0);
+      let rowScore = 0;
       for (let i = 0; i < arr.length - 1; i++) {
         if (arr[i] === arr[i + 1]) {
           arr[i] *= 2;
-          setScore((s) => s + arr[i]);
+          rowScore += arr[i];
           arr[i + 1] = 0;
         }
       }
       arr = arr.filter((val) => val !== 0);
       while (arr.length < SIZE) arr.push(0);
+      setScore(prev => prev + rowScore);
       return arr;
     });
     return newGrid;
@@ -78,18 +77,17 @@ export default function GameBoard() {
 
   return (
     <div style={{
-  display: "grid",
-  gridTemplateColumns: `repeat(${SIZE}, 80px)`,
-  gap: "10px",
-  backgroundColor: "#fff8e1",
-  padding: "16px",
-  borderRadius: "12px",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
-}}>
-  {grid.map((row, i) =>
-    row.map((val, j) => <Tile key={`${i}-${j}`} value={val} />)
-  )}
-</div>
-
+      display: "grid",
+      gridTemplateColumns: `repeat(${SIZE}, 80px)`,
+      gap: "10px",
+      backgroundColor: "#fff8e1",
+      padding: "16px",
+      borderRadius: "12px",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
+    }}>
+      {grid.map((row, i) =>
+        row.map((val, j) => <Tile key={`${i}-${j}`} value={val} />)
+      )}
+    </div>
   );
 }
