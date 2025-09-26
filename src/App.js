@@ -102,7 +102,6 @@ export default function App() {
   const CELO_SEPOLIA_CHAIN_ID = "0xAA044C";
 
   const switchToCeloSepolia = async () => {
-    if (!window.ethereum) return alert("Wallet non trouvé");
     const currentChain = await window.ethereum.request({ method: "eth_chainId" });
     if (currentChain === CELO_SEPOLIA_CHAIN_ID) return;
 
@@ -125,13 +124,11 @@ export default function App() {
         });
       } else {
         console.error(switchError);
-        alert("Erreur lors du switch de réseau : " + switchError.message);
       }
     }
   };
 
   const connectWallet = async () => {
-    if (!window.ethereum) return alert("Wallet non trouvé");
     await switchToCeloSepolia();
     try {
       await window.ethereum.request({ method: "eth_requestAccounts" });

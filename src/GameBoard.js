@@ -127,7 +127,6 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
             setLeaderboard({ bestScores, totalScores });
         } catch (e) {
             console.error(e);
-            alert("Erreur lors de la sauvegarde : " + (e.message || e));
         }
     };
 
