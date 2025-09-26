@@ -12,7 +12,7 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
     if (!data || data.length === 0) {
       return (
         <tr>
-          <td colSpan={activeTab === "best" ? 4 : 4} style={{ textAlign: "center" }}>
+          <td colSpan={4} style={{ textAlign: "center" }}>
             Aucun score encore
           </td>
         </tr>
@@ -109,7 +109,6 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
   );
 }
 
-
 export default function App() {
   const [account, setAccount] = useState(null);
   const [shortAddress, setShortAddress] = useState("");
@@ -118,18 +117,50 @@ export default function App() {
   const [leaderboardData, setLeaderboardData] = useState({ bestScores: [], totalScores: [] });
 
   const CONTRACT_ADDRESS = "0xfd897a7523f99122ae3ca9b118cf7628dd9c471d";
+  const CELO_SEPOLIA_CHAIN_ID = '0xAA044C';
+
+  const switchToCeloSepolia = async () => {
+    if (!window.ethereum) return alert("Wallet non trouvé");
+    const currentChain = await window.ethereum.request({ method: 'eth_chainId' });
+    if (currentChain === CELO_SEPOLIA_CHAIN_ID) return;
+
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: CELO_SEPOLIA_CHAIN_ID }],
+      });
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: CELO_SEPOLIA_CHAIN_ID,
+            chainName: 'Celo Sepolia Testnet',
+            nativeCurrency: { name: 'Celo', symbol: 'CELO', decimals: 18 },
+            rpcUrls: ['https://forno.celo-sepolia.celo-testnet.org/'],
+            blockExplorerUrls: ['https://celoscan.io'],
+          }],
+        });
+      } else {
+        console.error(switchError);
+        alert("Erreur lors du switch de réseau : " + switchError.message);
+      }
+    }
+  };
 
   // Connect wallet
   const connectWallet = async () => {
     if (!window.ethereum) return alert("Wallet non trouvé");
+
+    await switchToCeloSepolia();
+
     try {
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const web3 = new Web3(window.ethereum);
       const accounts = await web3.eth.getAccounts();
       setAccount(accounts[0]);
       setShortAddress(accounts[0].slice(0, 6) + "..." + accounts[0].slice(-4));
-      const clickerContract = new web3.eth.Contract(CeloClickerABI, CONTRACT_ADDRESS);
-      setContract(clickerContract);
+      setContract(new web3.eth.Contract(CeloClickerABI, CONTRACT_ADDRESS));
     } catch (e) {
       console.error(e);
     }
@@ -141,7 +172,6 @@ export default function App() {
       const web3 = new Web3("https://forno.celo-sepolia.celo-testnet.org/");
       const readOnlyContract = new web3.eth.Contract(CeloClickerABI, CONTRACT_ADDRESS);
 
-      // Récupération des meilleurs scores et total
       const bestRaw = await readOnlyContract.methods.getBestScores().call();
       const totalRaw = await readOnlyContract.methods.getTotalScores().call();
 
@@ -149,17 +179,13 @@ export default function App() {
         player: bestRaw[0][i],
         score: parseInt(bestRaw[1][i]),
         time: parseInt(bestRaw[2][i])
-      }));
+      })).sort((a, b) => b.score - a.score);
 
       let totalScores = totalRaw[0].map((_, i) => ({
         player: totalRaw[0][i],
         scoreTotal: parseInt(totalRaw[1][i]),
         gamesPlayed: parseInt(totalRaw[2][i])
-      }));
-
-      // Tri du plus grand au plus petit
-      bestScores.sort((a, b) => b.score - a.score);
-      totalScores.sort((a, b) => b.scoreTotal - a.scoreTotal);
+      })).sort((a, b) => b.scoreTotal - a.scoreTotal);
 
       setLeaderboardData({ bestScores, totalScores });
       setShowLeaderboard(true);
@@ -169,7 +195,6 @@ export default function App() {
       setShowLeaderboard(true);
     }
   };
-
 
   return (
     <div style={{
