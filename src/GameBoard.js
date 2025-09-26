@@ -12,7 +12,7 @@ const addRandomTile = (grid) => {
     return grid;
 };
 
-export default function GameBoard({ account, contract, setLeaderboard, connectWallet }) {
+export default function GameBoard({ account, contract, setLeaderboard, connectWallet, scoreSaved, setScoreSaved, handleNewGame }) {
     const [grid, setGrid] = useState(addRandomTile(addRandomTile(emptyGrid())));
     const [score, setScore] = useState(0);
     const [timer, setTimer] = useState(0);
@@ -89,17 +89,14 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
         setTimer(0);
         setTimerActive(false);
         setGameOver(false);
+        handleNewGame(); // Reset scoreSaved
     };
 
     const switchToCeloSepolia = async () => {
         if (!window.ethereum) return;
         try {
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0xAA044C' }], // CELO_CHAIN_ID
-            });
+            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xAA044C' }] });
         } catch (switchError) {
-            // Si le réseau n'existe pas dans MetaMask, l'ajouter
             if (switchError.code === 4902) {
                 await window.ethereum.request({
                     method: 'wallet_addEthereumChain',
@@ -111,37 +108,22 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
                         blockExplorerUrls: ['https://celoscan.io']
                     }],
                 });
-            } else {
-                console.error(switchError);
-            }
+            } else console.error(switchError);
         }
     };
 
     const saveScoreOnChain = async () => {
         if (!contract || !account) return alert("Wallet non connecté ou contrat indisponible");
-
         try {
             await switchToCeloSepolia();
-
-            // Envoie de la transaction
             await contract.methods.saveScore(score, timer).send({ from: account });
+            setScoreSaved(true); // <- bouton grisé après sauvegarde
 
-            // Mise à jour du leaderboard après sauvegarde
+            // Mise à jour leaderboard
             const bestRaw = await contract.methods.getBestScores().call();
             const totalRaw = await contract.methods.getTotalScores().call();
-
-            const bestScores = bestRaw[0].map((_, i) => ({
-                player: bestRaw[0][i],
-                score: parseInt(bestRaw[1][i]),
-                time: parseInt(bestRaw[2][i])
-            }));
-
-            const totalScores = totalRaw[0].map((_, i) => ({
-                player: totalRaw[0][i],
-                scoreTotal: parseInt(totalRaw[1][i]),
-                gamesPlayed: parseInt(totalRaw[2][i])
-            }));
-
+            const bestScores = bestRaw[0].map((_, i) => ({ player: bestRaw[0][i], score: parseInt(bestRaw[1][i]), time: parseInt(bestRaw[2][i]) }));
+            const totalScores = totalRaw[0].map((_, i) => ({ player: totalRaw[0][i], scoreTotal: parseInt(totalRaw[1][i]), gamesPlayed: parseInt(totalRaw[2][i]) }));
             setLeaderboard({ bestScores, totalScores });
         } catch (e) {
             console.error(e);
@@ -149,62 +131,41 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
         }
     };
 
-
     return (
         <>
             {gameOver && (
-                <div style={{
-                    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: "rgba(0,0,0,0.7)",
-                    display: "flex", justifyContent: "center", alignItems: "center", zIndex: 100
-                }}>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 100 }}>
                     <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", textAlign: "center", width: "300px" }}>
                         <h2>Game Over !</h2>
                         <p>Score: {score}</p>
                         <p>Temps: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
-                        <button onClick={restartGame} style={{
-                            padding: "10px 20px",
-                            backgroundColor: "#35d07f",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            marginTop: "15px",
-                            marginRight: "10px"
-                        }}>Rejouer</button>
+                        <button onClick={restartGame} style={{ padding: "10px 20px", backgroundColor: "#35d07f", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", marginTop: "15px", marginRight: "10px" }}>Rejouer</button>
 
                         {!account && (
                             <button
-                                onClick={async () => {
-                                    await connectWallet(); // se connecter
-                                    if (account && contract) {
-                                        await saveScoreOnChain(); // puis sauvegarder
-                                    }
-                                }}
-                                style={{
-                                    padding: "10px 20px",
-                                    backgroundColor: "#3498db",
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: "8px",
-                                    cursor: "pointer",
-                                    marginTop: "15px"
-                                }}
+                                onClick={async () => { await connectWallet(); if (account && contract) saveScoreOnChain(); }}
+                                style={{ padding: "10px 20px", backgroundColor: "#3498db", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", marginTop: "15px" }}
                             >
                                 Connecter et sauvegarder
                             </button>
                         )}
 
                         {account && (
-                            <button onClick={saveScoreOnChain} style={{
-                                padding: "10px 20px",
-                                backgroundColor: "#f5b700",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: "8px",
-                                cursor: "pointer",
-                                marginTop: "15px"
-                            }}>Sauvegarder</button>
+                            <button
+                                onClick={saveScoreOnChain}
+                                disabled={scoreSaved}
+                                style={{
+                                    padding: "10px 20px",
+                                    backgroundColor: scoreSaved ? "#ccc" : "#f5b700",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    cursor: scoreSaved ? "not-allowed" : "pointer",
+                                    marginTop: "15px"
+                                }}
+                            >
+                                Sauvegarder
+                            </button>
                         )}
                     </div>
                 </div>
@@ -216,15 +177,7 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
             </div>
 
             <div style={{ display: "flex", justifyContent: "center" }}>
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${SIZE},80px)`,
-                    gap: "10px",
-                    backgroundColor: "#fff8e1",
-                    padding: "16px",
-                    borderRadius: "12px",
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.15)"
-                }}>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${SIZE},80px)`, gap: "10px", backgroundColor: "#fff8e1", padding: "16px", borderRadius: "12px", boxShadow: "0 4px 10px rgba(0,0,0,0.15)" }}>
                     {grid.map((row, i) => row.map((val, j) => <Tile key={`${i}-${j}`} value={val} />))}
                 </div>
             </div>

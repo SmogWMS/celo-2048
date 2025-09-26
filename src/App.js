@@ -1,20 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GameBoard from "./GameBoard";
 import Web3 from "web3";
 import CeloClickerABI from "./CeloClicker.json";
 import celoLogo from "./assets/celo-logo.jpg";
 
 function LeaderboardPopup({ leaderboardData, onClose }) {
-  const [activeTab, setActiveTab] = useState("best"); // 'best' ou 'total'
+  const [activeTab, setActiveTab] = useState("best");
 
   const renderTable = () => {
     const data = activeTab === "best" ? leaderboardData.bestScores : leaderboardData.totalScores;
     if (!data || data.length === 0) {
       return (
         <tr>
-          <td colSpan={4} style={{ textAlign: "center" }}>
-            Aucun score encore
-          </td>
+          <td colSpan={4} style={{ textAlign: "center" }}>Aucun score encore</td>
         </tr>
       );
     }
@@ -49,8 +47,6 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
         width: "600px", maxHeight: "80vh", overflowY: "auto"
       }}>
         <h2 style={{ textAlign: "center" }}>Leaderboard</h2>
-
-        {/* Mini header toggle */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "10px", gap: "10px" }}>
           <button
             onClick={() => setActiveTab("best")}
@@ -73,36 +69,22 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
             }}
           >Cumul total</button>
         </div>
-
-        {/* Table */}
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
               <th>#</th>
               <th>Adresse</th>
-              {activeTab === "best" ? <>
-                <th>Score</th><th>Temps</th>
-              </> : <>
-                <th>Score total</th><th>Parties jouées</th>
-              </>}
+              {activeTab === "best" ? <><th>Score</th><th>Temps</th></> : <><th>Score total</th><th>Parties jouées</th></>}
             </tr>
           </thead>
-          <tbody>
-            {renderTable()}
-          </tbody>
+          <tbody>{renderTable()}</tbody>
         </table>
-
         <button onClick={onClose} style={{
-          marginTop: "15px",
-          padding: "8px 16px",
-          backgroundColor: "#35d07f",
-          color: "#fff",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-          display: "block",
-          marginLeft: "auto",
-          marginRight: "auto"
+          marginTop: "15px", padding: "8px 16px",
+          backgroundColor: "#35d07f", color: "#fff",
+          border: "none", borderRadius: "8px",
+          cursor: "pointer", display: "block",
+          marginLeft: "auto", marginRight: "auto"
         }}>Fermer</button>
       </div>
     </div>
@@ -115,19 +97,19 @@ export default function App() {
   const [contract, setContract] = useState(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState({ bestScores: [], totalScores: [] });
-
+  const [scoreSaved, setScoreSaved] = useState(false);
   const CONTRACT_ADDRESS = "0xfd897a7523f99122ae3ca9b118cf7628dd9c471d";
-  const CELO_SEPOLIA_CHAIN_ID = '0xAA044C';
+  const CELO_SEPOLIA_CHAIN_ID = "0xAA044C";
 
   const switchToCeloSepolia = async () => {
     if (!window.ethereum) return alert("Wallet non trouvé");
-    const currentChain = await window.ethereum.request({ method: 'eth_chainId' });
+    const currentChain = await window.ethereum.request({ method: "eth_chainId" });
     if (currentChain === CELO_SEPOLIA_CHAIN_ID) return;
 
     try {
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: CELO_SEPOLIA_CHAIN_ID }],
+        params: [{ chainId: CELO_SEPOLIA_CHAIN_ID }]
       });
     } catch (switchError) {
       if (switchError.code === 4902) {
@@ -135,11 +117,11 @@ export default function App() {
           method: 'wallet_addEthereumChain',
           params: [{
             chainId: CELO_SEPOLIA_CHAIN_ID,
-            chainName: 'Celo Sepolia Testnet',
-            nativeCurrency: { name: 'Celo', symbol: 'CELO', decimals: 18 },
-            rpcUrls: ['https://forno.celo-sepolia.celo-testnet.org/'],
-            blockExplorerUrls: ['https://celoscan.io'],
-          }],
+            chainName: "Celo Sepolia Testnet",
+            nativeCurrency: { name: "Celo", symbol: "CELO", decimals: 18 },
+            rpcUrls: ["https://forno.celo-sepolia.celo-testnet.org/"],
+            blockExplorerUrls: ["https://celoscan.io"]
+          }]
         });
       } else {
         console.error(switchError);
@@ -148,12 +130,9 @@ export default function App() {
     }
   };
 
-  // Connect wallet
   const connectWallet = async () => {
     if (!window.ethereum) return alert("Wallet non trouvé");
-
     await switchToCeloSepolia();
-
     try {
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const web3 = new Web3(window.ethereum);
@@ -161,12 +140,33 @@ export default function App() {
       setAccount(accounts[0]);
       setShortAddress(accounts[0].slice(0, 6) + "..." + accounts[0].slice(-4));
       setContract(new web3.eth.Contract(CeloClickerABI, CONTRACT_ADDRESS));
+      localStorage.setItem("connectedAccount", accounts[0]);
     } catch (e) {
       console.error(e);
     }
   };
 
-  // Fetch leaderboard
+  const disconnectWallet = () => {
+    setAccount(null);
+    setShortAddress("");
+    setContract(null);
+    localStorage.removeItem("connectedAccount");
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      const storedAccount = localStorage.getItem("connectedAccount");
+      if (storedAccount && window.ethereum) {
+        await switchToCeloSepolia();
+        const web3 = new Web3(window.ethereum);
+        setAccount(storedAccount);
+        setShortAddress(storedAccount.slice(0, 6) + "..." + storedAccount.slice(-4));
+        setContract(new web3.eth.Contract(CeloClickerABI, CONTRACT_ADDRESS));
+      }
+    };
+    init();
+  }, []);
+
   const fetchLeaderboard = async () => {
     try {
       const web3 = new Web3("https://forno.celo-sepolia.celo-testnet.org/");
@@ -175,13 +175,13 @@ export default function App() {
       const bestRaw = await readOnlyContract.methods.getBestScores().call();
       const totalRaw = await readOnlyContract.methods.getTotalScores().call();
 
-      let bestScores = bestRaw[0].map((_, i) => ({
+      const bestScores = bestRaw[0].map((_, i) => ({
         player: bestRaw[0][i],
         score: parseInt(bestRaw[1][i]),
         time: parseInt(bestRaw[2][i])
       })).sort((a, b) => b.score - a.score);
 
-      let totalScores = totalRaw[0].map((_, i) => ({
+      const totalScores = totalRaw[0].map((_, i) => ({
         player: totalRaw[0][i],
         scoreTotal: parseInt(totalRaw[1][i]),
         gamesPlayed: parseInt(totalRaw[2][i])
@@ -196,6 +196,8 @@ export default function App() {
     }
   };
 
+  const handleNewGame = () => setScoreSaved(false);
+
   return (
     <div style={{
       display: "flex", flexDirection: "column",
@@ -203,30 +205,42 @@ export default function App() {
       minHeight: "100vh", padding: "20px",
       backgroundColor: "#fff8e1", fontFamily: "Arial, sans-serif"
     }}>
-      {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         <img src={celoLogo} alt="Celo Logo" style={{ width: "50px", height: "50px" }} />
         <h1>Celo 2048</h1>
       </div>
 
-      {/* Adresse / connect */}
       {!account ? (
         <button onClick={connectWallet} style={{
           padding: "10px 20px", backgroundColor: "#35d07f",
           color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer",
           marginBottom: "20px"
         }}>Connect Wallet</button>
-      ) : <p>Adresse : {shortAddress}</p>}
+      ) : (
+        <>
+          <p>Adresse : {shortAddress}</p>
+          <button onClick={disconnectWallet} style={{
+            padding: "6px 12px", marginBottom: "20px", cursor: "pointer",
+            borderRadius: "8px", border: "1px solid #ddd", backgroundColor: "#f8f8f8"
+          }}>Disconnect</button>
+        </>
+      )}
 
-      {/* Leaderboard */}
       <button onClick={fetchLeaderboard} style={{
         padding: "8px 16px", backgroundColor: "#f5b700",
         color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer",
         marginBottom: "20px"
       }}>Leaderboard</button>
 
-      {/* GameBoard */}
-      <GameBoard account={account} contract={contract} setLeaderboard={setLeaderboardData} connectWallet={connectWallet} />
+      <GameBoard
+        account={account}
+        contract={contract}
+        setLeaderboard={setLeaderboardData}
+        connectWallet={connectWallet}
+        scoreSaved={scoreSaved}
+        setScoreSaved={setScoreSaved}
+        handleNewGame={handleNewGame}
+      />
 
       {showLeaderboard && (
         <LeaderboardPopup leaderboardData={leaderboardData} onClose={() => setShowLeaderboard(false)} />
