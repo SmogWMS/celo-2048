@@ -26,7 +26,7 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
         {activeTab === "best" ? (
           <>
             <td>{entry.score}</td>
-            <td>{entry.time}</td>
+            <td>{Math.floor(entry.time / 60)}:{(entry.time % 60).toString().padStart(2, '0')}</td>
           </>
         ) : (
           <>
