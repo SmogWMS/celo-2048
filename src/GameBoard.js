@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import Tile from "./Tile";
+import Web3 from "web3";
+import Celo2048Leaderboard from "./CeloClicker.json";
 
 const SIZE = 4;
 const emptyGrid = () => Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+
 const addRandomTile = (grid) => {
     const emptyCells = [];
     grid.forEach((row, i) => row.forEach((cell, j) => { if (cell === 0) emptyCells.push([i, j]); }));
@@ -12,12 +15,21 @@ const addRandomTile = (grid) => {
     return grid;
 };
 
-export default function GameBoard({ account, contract, setLeaderboard, connectWallet, scoreSaved, setScoreSaved, handleNewGame }) {
+export default function GameBoard({ handleNewGame, account, setAccount, contract, setContract, scoreSaved, setScoreSaved, network, NETWORKS, connectWallet }) {
     const [grid, setGrid] = useState(addRandomTile(addRandomTile(emptyGrid())));
+    const [mergedGrid, setMergedGrid] = useState(emptyGrid());
     const [score, setScore] = useState(0);
     const [timer, setTimer] = useState(0);
     const [timerActive, setTimerActive] = useState(false);
     const [gameOver, setGameOver] = useState(false);
+
+    useEffect(() => {
+        let interval = null;
+        if (timerActive && !gameOver) {
+            interval = setInterval(() => setTimer(t => t + 1), 1000);
+        }
+        return () => clearInterval(interval);
+    }, [timerActive, gameOver]);
 
     const isGameOver = (grid) => {
         for (let i = 0; i < SIZE; i++) {
@@ -30,47 +42,64 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
         return true;
     };
 
-    useEffect(() => {
-        let interval = null;
-        if (timerActive) interval = setInterval(() => setTimer(t => t + 1), 1000);
-        return () => clearInterval(interval);
-    }, [timerActive]);
-
     const slideLeft = (grid) => {
-        let newGrid = grid.map(row => {
+        const newMerged = emptyGrid();
+        const newGrid = grid.map((row, i) => {
             let arr = row.filter(v => v !== 0);
             let rowScore = 0;
-            for (let i = 0; i < arr.length - 1; i++) {
-                if (arr[i] === arr[i + 1]) {
-                    arr[i] *= 2;
-                    rowScore += arr[i];
-                    arr[i + 1] = 0;
+            let mergedRow = Array(SIZE).fill(false);
+            for (let j = 0; j < arr.length - 1; j++) {
+                if (arr[j] === arr[j + 1]) {
+                    arr[j] *= 2;
+                    rowScore += arr[j];
+                    arr[j + 1] = 0;
+                    mergedRow[j] = true;
                 }
             }
             arr = arr.filter(v => v !== 0);
             while (arr.length < SIZE) arr.push(0);
             setScore(prev => prev + rowScore);
+            for (let k = 0; k < SIZE; k++) newMerged[i][k] = mergedRow[k];
             return arr;
         });
-        return newGrid;
+        return { grid: newGrid, merged: newMerged };
     };
 
     const rotateGrid = (grid) => grid[0].map((_, i) => grid.map(row => row[i]));
 
     const move = (dir) => {
         if (!timerActive) setTimerActive(true);
-        let newGrid = JSON.parse(JSON.stringify(grid));
-        if (dir === "left") newGrid = slideLeft(newGrid);
-        if (dir === "right") { newGrid = newGrid.map(r => r.reverse()); newGrid = slideLeft(newGrid); newGrid = newGrid.map(r => r.reverse()); }
-        if (dir === "up") { newGrid = rotateGrid(newGrid); newGrid = slideLeft(newGrid); newGrid = rotateGrid(newGrid); }
-        if (dir === "down") { newGrid = rotateGrid(newGrid); newGrid = newGrid.map(r => r.reverse()); newGrid = slideLeft(newGrid); newGrid = newGrid.map(r => r.reverse()); newGrid = rotateGrid(newGrid); }
-        if (JSON.stringify(newGrid) !== JSON.stringify(grid)) setGrid(addRandomTile(newGrid));
-        if (isGameOver(newGrid)) {
-            setGameOver(true);
-            setTimerActive(false);
+        let workingGrid = JSON.parse(JSON.stringify(grid));
+        let mergedResult;
+        if (dir === "left") mergedResult = slideLeft(workingGrid);
+        else if (dir === "right") {
+            workingGrid = workingGrid.map(r => r.reverse());
+            mergedResult = slideLeft(workingGrid);
+            mergedResult.grid = mergedResult.grid.map(r => r.reverse());
+            mergedResult.merged = mergedResult.merged.map(r => r.reverse());
+        } else if (dir === "up") {
+            workingGrid = rotateGrid(workingGrid);
+            mergedResult = slideLeft(workingGrid);
+            mergedResult.grid = rotateGrid(mergedResult.grid);
+            mergedResult.merged = rotateGrid(mergedResult.merged);
+        } else if (dir === "down") {
+            workingGrid = rotateGrid(workingGrid);
+            workingGrid = workingGrid.map(r => r.reverse());
+            mergedResult = slideLeft(workingGrid);
+            mergedResult.grid = mergedResult.grid.map(r => r.reverse());
+            mergedResult.merged = mergedResult.merged.map(r => r.reverse());
+            mergedResult.grid = rotateGrid(mergedResult.grid);
+            mergedResult.merged = rotateGrid(mergedResult.merged);
         }
+
+        if (mergedResult && JSON.stringify(mergedResult.grid) !== JSON.stringify(grid)) {
+            setGrid(addRandomTile(mergedResult.grid));
+            setMergedGrid(mergedResult.merged);
+            if (isGameOver(mergedResult.grid)) setGameOver(true);
+        } else setMergedGrid(emptyGrid());
     };
 
+    // Keyboard
     useEffect(() => {
         const handleKey = (e) => {
             if (gameOver) return;
@@ -85,50 +114,38 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
 
     const restartGame = () => {
         setGrid(addRandomTile(addRandomTile(emptyGrid())));
+        setMergedGrid(emptyGrid());
         setScore(0);
         setTimer(0);
         setTimerActive(false);
         setGameOver(false);
-        handleNewGame(); // Reset scoreSaved
+        setScoreSaved(false);
+        handleNewGame();
     };
 
-    const switchToCeloSepolia = async () => {
-        if (!window.ethereum) return;
+    const saveScore = async () => {
+        if (!contract || scoreSaved || !account) return;
         try {
-            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xAA044C' }] });
-        } catch (switchError) {
-            if (switchError.code === 4902) {
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: '0xAA044C',
-                        chainName: 'Celo Sepolia Testnet',
-                        nativeCurrency: { name: 'Celo', symbol: 'CELO', decimals: 18 },
-                        rpcUrls: ['https://forno.celo-sepolia.celo-testnet.org/'],
-                        blockExplorerUrls: ['https://celoscan.io']
-                    }],
-                });
-            } else console.error(switchError);
-        }
-    };
-
-    const saveScoreOnChain = async () => {
-        if (!contract || !account) return alert("Wallet non connecté ou contrat indisponible");
-        try {
-            await switchToCeloSepolia();
             await contract.methods.saveScore(score, timer).send({ from: account });
-            setScoreSaved(true); // <- bouton grisé après sauvegarde
-
-            // Mise à jour leaderboard
-            const bestRaw = await contract.methods.getBestScores().call();
-            const totalRaw = await contract.methods.getTotalScores().call();
-            const bestScores = bestRaw[0].map((_, i) => ({ player: bestRaw[0][i], score: parseInt(bestRaw[1][i]), time: parseInt(bestRaw[2][i]) }));
-            const totalScores = totalRaw[0].map((_, i) => ({ player: totalRaw[0][i], scoreTotal: parseInt(totalRaw[1][i]), gamesPlayed: parseInt(totalRaw[2][i]) }));
-            setLeaderboard({ bestScores, totalScores });
-        } catch (e) {
-            console.error(e);
+            setScoreSaved(true);
+        } catch (err) {
+            console.error(err);
         }
     };
+
+    const connectAndSave = async () => {
+        if (!window.ethereum) return alert("Veuillez installer un wallet");
+        try {
+            await connectWallet();
+            setTimeout(() => {
+                saveScore();
+            }, 500);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    // ...existing code...
 
     return (
         <>
@@ -138,34 +155,40 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
                         <h2>Game Over !</h2>
                         <p>Score: {score}</p>
                         <p>Temps: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
-                        <button onClick={restartGame} style={{ padding: "10px 20px", backgroundColor: "#35d07f", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", marginTop: "15px", marginRight: "10px" }}>Rejouer</button>
-
-                        {!account && (
+                        <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "15px" }}>
                             <button
-                                onClick={async () => { await connectWallet(); if (account && contract) saveScoreOnChain(); }}
-                                style={{ padding: "10px 20px", backgroundColor: "#3498db", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", marginTop: "15px" }}
+                                onClick={restartGame}
+                                style={{ padding: "10px 20px", backgroundColor: "#35d07f", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}
                             >
-                                Connecter et sauvegarder
+                                Rejouer
                             </button>
-                        )}
 
-                        {account && (
-                            <button
-                                onClick={saveScoreOnChain}
-                                disabled={scoreSaved}
-                                style={{
-                                    padding: "10px 20px",
-                                    backgroundColor: scoreSaved ? "#ccc" : "#f5b700",
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: "8px",
-                                    cursor: scoreSaved ? "not-allowed" : "pointer",
-                                    marginTop: "15px"
-                                }}
-                            >
-                                Sauvegarder
-                            </button>
-                        )}
+                            {!account ? (
+                                <button
+                                    onClick={connectAndSave}
+                                    disabled={scoreSaved}
+                                    style={{ padding: "10px 20px", backgroundColor: scoreSaved ? "#ccc" : "#f5b700", color: "#fff", border: "none", borderRadius: "8px", cursor: scoreSaved ? "not-allowed" : "pointer" }}
+                                >
+                                    {scoreSaved ? "Score Sauvegardé" : "Connecter & Sauvegarder"}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={saveScore}
+                                    disabled={scoreSaved || !contract}
+                                    style={{
+                                        padding: "10px 20px",
+                                        backgroundColor: scoreSaved ? "#ccc" : "#f5b700",
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        cursor: scoreSaved ? "not-allowed" : "pointer"
+                                    }}
+                                >
+                                    {scoreSaved ? "Score Sauvegardé" : "Sauvegarder"}
+                                </button>
+                            )}
+
+                        </div>
                     </div>
                 </div>
             )}
@@ -175,10 +198,20 @@ export default function GameBoard({ account, contract, setLeaderboard, connectWa
                 <p>Temps: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "center" }}>
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${SIZE},80px)`, gap: "10px", backgroundColor: "#fff8e1", padding: "16px", borderRadius: "12px", boxShadow: "0 4px 10px rgba(0,0,0,0.15)" }}>
-                    {grid.map((row, i) => row.map((val, j) => <Tile key={`${i}-${j}`} value={val} />))}
-                </div>
+            {/* Plateau */}
+            <div style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${SIZE},80px)`,
+                gap: "10px",
+                backgroundColor: "#fff8e1",
+                padding: "16px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+                justifyContent: "center"
+            }}>
+                {grid.map((row, i) =>
+                    row.map((val, j) => <Tile key={`${i}-${j}`} value={val} merged={mergedGrid[i][j]} />)
+                )}
             </div>
         </>
     );

@@ -4,6 +4,26 @@ import Web3 from "web3";
 import CeloClickerABI from "./CeloClicker.json";
 import celoLogo from "./assets/celo-logo.jpg";
 
+/* --- Réseaux supportés --- */
+const NETWORKS = {
+  mainnet: {
+    chainId: "0xa4ec",
+    chainName: "Celo Mainnet",
+    rpcUrls: ["https://forno.celo.org"],
+    blockExplorerUrls: ["https://celoscan.io"],
+    nativeCurrency: { name: "Celo", symbol: "CELO", decimals: 18 },
+    contractAddress: "0x8e1198805653809F72dA42b8CF049f6337EE65Ed",
+  },
+  sepolia: {
+    chainId: "0xAA044C",
+    chainName: "Celo Sepolia Testnet",
+    rpcUrls: ["https://forno.celo-sepolia.celo-testnet.org/"],
+    blockExplorerUrls: ["https://celoscan.io"],
+    nativeCurrency: { name: "Celo", symbol: "CELO", decimals: 18 },
+    contractAddress: "0xfd897a7523f99122ae3ca9b118cf7628dd9c471d",
+  },
+};
+
 function LeaderboardPopup({ leaderboardData, onClose }) {
   const [activeTab, setActiveTab] = useState("best");
 
@@ -12,7 +32,7 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
     if (!data || data.length === 0) {
       return (
         <tr>
-          <td colSpan={4} style={{ textAlign: "center" }}>Aucun score encore</td>
+          <td colSpan={4} style={{ textAlign: "center" }}>No scores yet</td>
         </tr>
       );
     }
@@ -57,7 +77,7 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
               backgroundColor: activeTab === "best" ? "#e0ffe4" : "#f8f8f8",
               cursor: "pointer"
             }}
-          >Meilleur score</button>
+          >Best Score</button>
           <button
             onClick={() => setActiveTab("total")}
             style={{
@@ -67,14 +87,14 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
               backgroundColor: activeTab === "total" ? "#e0ffe4" : "#f8f8f8",
               cursor: "pointer"
             }}
-          >Cumul total</button>
+          >Total Score</button>
         </div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
               <th>#</th>
-              <th>Adresse</th>
-              {activeTab === "best" ? <><th>Score</th><th>Temps</th></> : <><th>Score total</th><th>Parties jouées</th></>}
+              <th>Address</th>
+              {activeTab === "best" ? <><th>Score</th><th>Time</th></> : <><th>Total Score</th><th>Games</th></>}
             </tr>
           </thead>
           <tbody>{renderTable()}</tbody>
@@ -85,7 +105,7 @@ function LeaderboardPopup({ leaderboardData, onClose }) {
           border: "none", borderRadius: "8px",
           cursor: "pointer", display: "block",
           marginLeft: "auto", marginRight: "auto"
-        }}>Fermer</button>
+        }}>Close</button>
       </div>
     </div>
   );
@@ -95,52 +115,35 @@ export default function App() {
   const [account, setAccount] = useState(null);
   const [shortAddress, setShortAddress] = useState("");
   const [contract, setContract] = useState(null);
+  const [network, setNetwork] = useState("mainnet");
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState({ bestScores: [], totalScores: [] });
   const [scoreSaved, setScoreSaved] = useState(false);
-  const CONTRACT_ADDRESS = "0xfd897a7523f99122ae3ca9b118cf7628dd9c471d";
-  const CELO_SEPOLIA_CHAIN_ID = "0xAA044C";
 
-  const switchToCeloSepolia = async () => {
-    const currentChain = await window.ethereum.request({ method: "eth_chainId" });
-    if (currentChain === CELO_SEPOLIA_CHAIN_ID) return;
-
+  const switchNetwork = async (net) => {
+    if (!window.ethereum) return;
     try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: CELO_SEPOLIA_CHAIN_ID }]
-      });
+      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: NETWORKS[net].chainId }] });
     } catch (switchError) {
       if (switchError.code === 4902) {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: CELO_SEPOLIA_CHAIN_ID,
-            chainName: "Celo Sepolia Testnet",
-            nativeCurrency: { name: "Celo", symbol: "CELO", decimals: 18 },
-            rpcUrls: ["https://forno.celo-sepolia.celo-testnet.org/"],
-            blockExplorerUrls: ["https://celoscan.io"]
-          }]
-        });
-      } else {
-        console.error(switchError);
-      }
+        await window.ethereum.request({ method: "wallet_addEthereumChain", params: [NETWORKS[net]] });
+      } else console.error(switchError);
     }
   };
 
   const connectWallet = async () => {
-    await switchToCeloSepolia();
+    const defaultNetwork = "mainnet";
+    await switchNetwork(defaultNetwork);
     try {
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const web3 = new Web3(window.ethereum);
       const accounts = await web3.eth.getAccounts();
       setAccount(accounts[0]);
       setShortAddress(accounts[0].slice(0, 6) + "..." + accounts[0].slice(-4));
-      setContract(new web3.eth.Contract(CeloClickerABI, CONTRACT_ADDRESS));
+      setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[defaultNetwork].contractAddress));
       localStorage.setItem("connectedAccount", accounts[0]);
-    } catch (e) {
-      console.error(e);
-    }
+      setNetwork(defaultNetwork);
+    } catch (e) { if (e.code !== 4001) console.error(e); }
   };
 
   const disconnectWallet = () => {
@@ -154,11 +157,12 @@ export default function App() {
     const init = async () => {
       const storedAccount = localStorage.getItem("connectedAccount");
       if (storedAccount && window.ethereum) {
-        await switchToCeloSepolia();
+        await switchNetwork("mainnet");
         const web3 = new Web3(window.ethereum);
         setAccount(storedAccount);
         setShortAddress(storedAccount.slice(0, 6) + "..." + storedAccount.slice(-4));
-        setContract(new web3.eth.Contract(CeloClickerABI, CONTRACT_ADDRESS));
+        setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS["mainnet"].contractAddress));
+        setNetwork("mainnet");
       }
     };
     init();
@@ -166,8 +170,8 @@ export default function App() {
 
   const fetchLeaderboard = async () => {
     try {
-      const web3 = new Web3("https://forno.celo-sepolia.celo-testnet.org/");
-      const readOnlyContract = new web3.eth.Contract(CeloClickerABI, CONTRACT_ADDRESS);
+      const web3 = new Web3(NETWORKS[network].rpcUrls[0]);
+      const readOnlyContract = new web3.eth.Contract(CeloClickerABI, NETWORKS[network].contractAddress);
 
       const bestRaw = await readOnlyContract.methods.getBestScores().call();
       const totalRaw = await readOnlyContract.methods.getTotalScores().call();
@@ -214,14 +218,31 @@ export default function App() {
           marginBottom: "20px"
         }}>Connect Wallet</button>
       ) : (
-        <>
-          <p>Adresse : {shortAddress}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+          <p>Address: {shortAddress}</p>
           <button onClick={disconnectWallet} style={{
-            padding: "6px 12px", marginBottom: "20px", cursor: "pointer",
+            padding: "6px 12px", cursor: "pointer",
             borderRadius: "8px", border: "1px solid #ddd", backgroundColor: "#f8f8f8"
           }}>Disconnect</button>
-        </>
+        </div>
       )}
+
+      <div style={{ marginBottom: "20px" }}>
+        <label>Network: </label>
+        <select
+          value={network}
+          onChange={async (e) => {
+            const newNet = e.target.value;
+            await switchNetwork(newNet);
+            setNetwork(newNet);
+            const web3 = new Web3(window.ethereum);
+            setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[newNet].contractAddress));
+          }}
+        >
+          <option value="mainnet">Celo Mainnet</option>
+          <option value="sepolia">Celo Sepolia</option>
+        </select>
+      </div>
 
       <button onClick={fetchLeaderboard} style={{
         padding: "8px 16px", backgroundColor: "#f5b700",
@@ -237,6 +258,8 @@ export default function App() {
         scoreSaved={scoreSaved}
         setScoreSaved={setScoreSaved}
         handleNewGame={handleNewGame}
+        network={network}
+        NETWORKS={NETWORKS}
       />
 
       {showLeaderboard && (
