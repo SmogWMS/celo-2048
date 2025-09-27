@@ -12,12 +12,11 @@ A decentralized version of the famous **2048 puzzle game**, built with **React**
 
 - 🎲 **Classic 2048 gameplay** with smooth animations and scoring system
 - 🏆 **Leaderboard** showing best and total scores from the smart contract
-- 💾 **Save your best score on-chain** (Celo Mainnet or Sepolia)
-- 🔗 **Wallet connection** with automatic network switching (defaults to Mainnet)
+- 💾 **Save your best score on-chain** (Celo Mainnet or Celo Sepolia Testnet)
+- 🔗 **Wallet connection** with automatic network switching (defaults to Celo Mainnet)
 - ⏱️ Built-in **timer** that stops when the game is over
 - 🔁 **Replay option** resets the board and allows new score saving
 - 🔒 **One-time save per game** (button disabled after saving)
-- 📱 Responsive design for desktop and mobile
 
 ---
 
@@ -80,7 +79,6 @@ The project uses the **Celo2048Leaderboard** smart contract to save scores and t
 	  - ➡️ Right
 	  - ⬆️ Up
 	  - ⬇️ Down
-	- Or swipe on mobile
 
 4. **Game Over**
 	- If connected: click **Save Score** (button disables after saving)
