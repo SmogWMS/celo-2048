@@ -181,7 +181,7 @@ export default function App() {
     boxShadow: "0 4px 16px rgba(53,208,127,0.10)",
     padding: "12px 20px",
     display: "flex",
-    flexDirection: "column", // <-- pour mettre le lien en dessous
+    flexDirection: "column",
     gap: "8px",
     minWidth: "180px",
   }}
@@ -189,29 +189,30 @@ export default function App() {
   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
     <span style={{ fontWeight: "bold", fontSize: "14px", color: "#35d07f" }}>Network:</span>
     <select
-      value={network}
-      onChange={async (e) => {
-        const newNet = e.target.value;
-        setNetwork(newNet);
-        await switchNetwork(newNet);
-        if (account) {
-          const web3 = new Web3(window.ethereum);
-          setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[newNet].contractAddress));
-        }
-      }}
-      style={{
-        padding: "6px 12px",
-        borderRadius: "8px",
-        border: "1.5px solid #35d07f",
-        backgroundColor: "#f7fff7",
-        color: "#222",
-        fontWeight: "bold",
-        fontSize: "14px",
-        cursor: "pointer",
-        outline: "none",
-        width: "100%",
-      }}
-    >
+          value={network}
+          onChange={async (e) => {
+            const newNet = e.target.value;
+            setNetwork(newNet);
+            await switchNetwork(newNet);
+            if (account) {
+              const web3 = new Web3(window.ethereum);
+              setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[newNet].contractAddress));
+            }
+          }}
+          onKeyDown={e => e.preventDefault()}
+          style={{
+            padding: "6px 12px",
+            borderRadius: "8px",
+            border: "1.5px solid #35d07f",
+            backgroundColor: "#f7fff7",
+            color: "#222",
+            fontWeight: "bold",
+            fontSize: "14px",
+            cursor: "pointer",
+            outline: "none",
+            width: "100%",
+          }}
+        >
       <option value="mainnet">Celo Mainnet</option>
       <option value="sepolia">Celo Sepolia</option>
     </select>
