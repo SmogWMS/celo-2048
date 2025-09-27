@@ -248,7 +248,7 @@ export default function App() {
         padding: "8px 16px", backgroundColor: "#f5b700",
         color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer",
         marginBottom: "20px"
-      }}>Leaderboard</button>
+      }}>Leaderboards</button>
 
       <GameBoard
         account={account}

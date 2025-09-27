@@ -154,13 +154,13 @@ export default function GameBoard({ handleNewGame, account, setAccount, contract
                     <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", textAlign: "center", width: "300px" }}>
                         <h2>Game Over !</h2>
                         <p>Score: {score}</p>
-                        <p>Temps: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
+                        <p>Time: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
                         <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "15px" }}>
                             <button
                                 onClick={restartGame}
                                 style={{ padding: "10px 20px", backgroundColor: "#35d07f", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}
                             >
-                                Rejouer
+                                Replay
                             </button>
 
                             {!account ? (
@@ -169,7 +169,7 @@ export default function GameBoard({ handleNewGame, account, setAccount, contract
                                     disabled={scoreSaved}
                                     style={{ padding: "10px 20px", backgroundColor: scoreSaved ? "#ccc" : "#f5b700", color: "#fff", border: "none", borderRadius: "8px", cursor: scoreSaved ? "not-allowed" : "pointer" }}
                                 >
-                                    {scoreSaved ? "Score Sauvegardé" : "Connecter & Sauvegarder"}
+                                    {scoreSaved ? "Score Saved" : "Connect & Save"}
                                 </button>
                             ) : (
                                 <button
@@ -184,7 +184,7 @@ export default function GameBoard({ handleNewGame, account, setAccount, contract
                                         cursor: scoreSaved ? "not-allowed" : "pointer"
                                     }}
                                 >
-                                    {scoreSaved ? "Score Sauvegardé" : "Sauvegarder"}
+                                    {scoreSaved ? "Score Saved" : "Save"}
                                 </button>
                             )}
 
@@ -195,7 +195,7 @@ export default function GameBoard({ handleNewGame, account, setAccount, contract
 
             <div style={{ display: "flex", gap: "20px", justifyContent: "center", marginBottom: "20px", fontWeight: "bold" }}>
                 <p>Score: {score}</p>
-                <p>Temps: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
+                <p>Time: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
             </div>
 
             {/* Plateau */}
