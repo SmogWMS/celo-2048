@@ -1,8 +1,49 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Tile from "./Tile";
 import { getSize, emptyGrid, addRandomTile, isGameOver, moveGrid } from "../utils/gameLogic";
 
 export default function GameBoard({ account, contract, scoreSaved, setScoreSaved, connectWallet, gameMode }) {
+    // Mobile swipe 
+    const touchStartRef = React.useRef(null);
+    const touchEndRef = React.useRef(null);
+
+    const getSwipeDirection = (start, end) => {
+        if (!start || !end) return null;
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx > 30) return 'right';
+            if (dx < -30) return 'left';
+        } else {
+            if (dy > 30) return 'down';
+            if (dy < -30) return 'up';
+        }
+        return null;
+    };
+
+    const handleTouchStart = (e) => {
+        if (e.touches && e.touches.length === 1) {
+            touchStartRef.current = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY,
+            };
+        }
+    };
+
+    const handleTouchEnd = (e) => {
+        if (e.changedTouches && e.changedTouches.length === 1) {
+            touchEndRef.current = {
+                x: e.changedTouches[0].clientX,
+                y: e.changedTouches[0].clientY,
+            };
+            const direction = getSwipeDirection(touchStartRef.current, touchEndRef.current);
+            if (direction) {
+                handleMove(direction);
+            }
+        }
+    };
+
+
     const size = getSize(gameMode);
 
     const [grid, setGrid] = useState(() => addRandomTile(addRandomTile(emptyGrid(size))));
@@ -114,7 +155,11 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
                 <p>Time: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: `repeat(${size},80px)`, gap: "10px", backgroundColor: "#fff8e1", padding: "16px", borderRadius: "12px", boxShadow: "0 4px 10px rgba(0,0,0,0.15)", justifyContent: "center" }}>
+            <div
+                style={{ display: "grid", gridTemplateColumns: `repeat(${size},80px)`, gap: "10px", backgroundColor: "#fff8e1", padding: "16px", borderRadius: "12px", boxShadow: "0 4px 10px rgba(0,0,0,0.15)", justifyContent: "center" }}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+            >
                 {grid.map((row, i) => row.map((val, j) => <Tile key={`${i}-${j}`} value={val} merged={mergedGrid[i][j]} />))}
             </div>
         </>
