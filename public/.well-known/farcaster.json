@@ -1,0 +1,19 @@
+{
+  "miniapp": {
+    "name": "2048 Celo",
+    "homeUrl": "https://celo-2048.vercel.app",
+    "iconUrl": "https://celo-2048.vercel.app/celo-2048-logo.png",
+    "splashImageUrl": "https://celo-2048.vercel.app/celo-2048-logo.png",
+    "splashBackgroundColor": "#ffffff",
+    "subtitle": "The classic 2048 game on Celo",
+    "description": "Play 2048 directly inside Farcaster! Slide the tiles and reach 2048.",
+    "screenshotUrls": [
+      "https://celo-2048.vercel.app/celo-2048-logo.png"
+    ],
+    "primaryCategory": "game",
+    "tags": ["game", "2048", "Celo", "puzzle"],
+    "ogTitle": "2048 Celo Mini App",
+    "ogDescription": "Play 2048 inside Farcaster!",
+    "ogImageUrl": "https://celo-2048.vercel.app/celo-2048-logo.png"
+  }
+}
