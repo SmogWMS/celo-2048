@@ -34,14 +34,14 @@ export default function App() {
         method: "wallet_switchEthereumChain",
         params: [{ chainId: NETWORKS[net].chainId }],
       });
-      showNetworkToast(`Network changed to ${NETWORKS[net].chainName} on MetaMask!`);
+      showNetworkToast(`Network changed to ${NETWORKS[net].chainName}`);
     } catch (e) {
       if (e.code === 4902) {
         await window.ethereum.request({
           method: "wallet_addEthereumChain",
           params: [NETWORKS[net]],
         });
-        showNetworkToast(`Network added and switched to ${NETWORKS[net].chainName} on MetaMask!`);
+        showNetworkToast(`Network added and switched to ${NETWORKS[net].chainName}`);
       } else console.error(e);
     }
   };
