@@ -1,6 +1,9 @@
-export const SIZE = 4;
+export const getSize = (mode = "classic") => {
+  if (mode === "6x6") return 6;
+  return 4;
+};
 
-export const emptyGrid = () => Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+export const emptyGrid = (size = 4) => Array(size).fill(null).map(() => Array(size).fill(0));
 
 export const addRandomTile = (grid) => {
   const emptyCells = [];
@@ -12,20 +15,21 @@ export const addRandomTile = (grid) => {
 };
 
 export const isGameOver = (grid) => {
-  for (let i = 0; i < SIZE; i++) {
-    for (let j = 0; j < SIZE; j++) {
+  const size = grid.length;
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size; j++) {
       if (grid[i][j] === 0) return false;
-      if (i < SIZE - 1 && grid[i][j] === grid[i + 1][j]) return false;
-      if (j < SIZE - 1 && grid[i][j] === grid[i][j + 1]) return false;
+      if (i < size - 1 && grid[i][j] === grid[i + 1][j]) return false;
+      if (j < size - 1 && grid[i][j] === grid[i][j + 1]) return false;
     }
   }
   return true;
 };
 
 // Fusionne une ligne vers la gauche
-const mergeLine = (line) => {
+const mergeLine = (line, size) => {
   let newLine = line.filter(v => v !== 0);
-  let merged = Array(SIZE).fill(false);
+  let merged = Array(size).fill(false);
   let gainedScore = 0;
 
   for (let i = 0; i < newLine.length - 1; i++) {
@@ -37,19 +41,20 @@ const mergeLine = (line) => {
     }
   }
   newLine = newLine.filter(v => v !== 0);
-  while (newLine.length < SIZE) newLine.push(0);
+  while (newLine.length < size) newLine.push(0);
 
   return { newLine, merged, gainedScore };
 };
 
 // Applique la fusion à la grille entière
 const slideLeft = (grid) => {
+  const size = grid.length;
   let newGrid = [];
   let mergedGrid = [];
   let totalScore = 0;
 
-  for (let i = 0; i < SIZE; i++) {
-    const { newLine, merged, gainedScore } = mergeLine(grid[i]);
+  for (let i = 0; i < size; i++) {
+    const { newLine, merged, gainedScore } = mergeLine(grid[i], size);
     newGrid.push(newLine);
     mergedGrid.push(merged);
     totalScore += gainedScore;
