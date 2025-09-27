@@ -8,6 +8,13 @@ import { FiLogOut } from "react-icons/fi";
 import { NETWORKS } from "./constants/networks";
 
 export default function App() {
+  // Detect mobile device
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [gameMode, setGameMode] = useState("classic"); // classic, 6x6, time
   const [account, setAccount] = useState(null);
   const [shortAddress, setShortAddress] = useState("");
@@ -170,65 +177,67 @@ export default function App() {
         </select>
       </div> */}
       {/* Network selector top-left */}
-      <div
-  style={{
-    position: "absolute",
-    top: 20,
-    left: 20,
-    zIndex: 10,
-    background: "#fff",
-    borderRadius: "16px",
-    boxShadow: "0 4px 16px rgba(53,208,127,0.10)",
-    padding: "12px 20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    minWidth: "180px",
-  }}
->
-  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-    <span style={{ fontWeight: "bold", fontSize: "14px", color: "#35d07f" }}>Network:</span>
-    <select
-          value={network}
-          onChange={async (e) => {
-            const newNet = e.target.value;
-            setNetwork(newNet);
-            await switchNetwork(newNet);
-            if (account) {
-              const web3 = new Web3(window.ethereum);
-              setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[newNet].contractAddress));
-            }
-          }}
-          onKeyDown={e => e.preventDefault()}
+  {!isMobile && (
+        <div
           style={{
-            padding: "6px 12px",
-            borderRadius: "8px",
-            border: "1.5px solid #35d07f",
-            backgroundColor: "#f7fff7",
-            color: "#222",
-            fontWeight: "bold",
-            fontSize: "14px",
-            cursor: "pointer",
-            outline: "none",
-            width: "100%",
+            position: "absolute",
+            top: 20,
+            left: 20,
+            zIndex: 10,
+            background: "#fff",
+            borderRadius: "16px",
+            boxShadow: "0 4px 16px rgba(53,208,127,0.10)",
+            padding: "12px 20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            minWidth: "180px",
           }}
         >
-      <option value="mainnet">Celo Mainnet</option>
-      <option value="sepolia">Celo Sepolia</option>
-    </select>
-  </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontWeight: "bold", fontSize: "14px", color: "#35d07f" }}>Network:</span>
+            <select
+              value={network}
+              onChange={async (e) => {
+                const newNet = e.target.value;
+                setNetwork(newNet);
+                await switchNetwork(newNet);
+                if (account) {
+                  const web3 = new Web3(window.ethereum);
+                  setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[newNet].contractAddress));
+                }
+              }}
+              onKeyDown={e => e.preventDefault()}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1.5px solid #35d07f",
+                backgroundColor: "#f7fff7",
+                color: "#222",
+                fontWeight: "bold",
+                fontSize: "14px",
+                cursor: "pointer",
+                outline: "none",
+                width: "100%",
+              }}
+            >
+              <option value="mainnet">Celo Mainnet</option>
+              <option value="sepolia">Celo Sepolia</option>
+            </select>
+          </div>
+        </div>
+      )}
 
-  {network === "sepolia" && (
-    <a
-      href="https://faucet.celo.org/celo-sepolia"
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{ fontSize: "14px", color: "#35d07f", textDecoration: "underline" }}
-    >
-      Click here to claim testnet CELO and start playing
-    </a>
-  )}
-</div>
+    {network === "sepolia" && (
+      <a
+        href="https://faucet.celo.org/celo-sepolia"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ fontSize: "14px", color: "#35d07f", textDecoration: "underline" }}
+      >
+        Click here to claim testnet CELO and start playing
+      </a>
+    )}
 
       {/* Toast */}
       {showToast && (

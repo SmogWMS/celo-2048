@@ -1,3 +1,22 @@
+/* Responsive game board grid for mobile */
+.game-board-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--board-size, 4), 80px);
+  gap: 10px;
+  background-color: #fff8e1;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .game-board-grid {
+    grid-template-columns: repeat(var(--board-size, 4), 48px);
+    gap: 6px;
+    padding: 8px;
+  }
+}
 .App {
   text-align: center;
 }

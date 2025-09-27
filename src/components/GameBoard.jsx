@@ -156,7 +156,17 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
             </div>
 
             <div
-                style={{ display: "grid", gridTemplateColumns: `repeat(${size},80px)`, gap: "10px", backgroundColor: "#fff8e1", padding: "16px", borderRadius: "12px", boxShadow: "0 4px 10px rgba(0,0,0,0.15)", justifyContent: "center" }}
+                className="game-board-grid"
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${size}, minmax(0, 80px))`,
+                    gap: window.innerWidth <= 600 ? "6px" : "10px",
+                    backgroundColor: "#fff8e1",
+                    padding: window.innerWidth <= 600 ? "8px" : "16px",
+                    borderRadius: "12px",
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+                    justifyContent: "center"
+                }}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
