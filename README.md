@@ -27,10 +27,10 @@ A decentralized version of the famous **2048 puzzle game**, built with **React**
 - **React** – Game UI
 - **Framer Motion** – Animations
 - **Web3.js** – Blockchain integration
+- **Custom Hooks** – Wallet & contract logic (`useWeb3.js`)
 
 ### Smart Contracts
 - **Solidity** – Celo2048Leaderboard contract
-- **Hardhat** – Compilation & deployment
 - **Celo Blockchain** – Score storage
 
 ---
