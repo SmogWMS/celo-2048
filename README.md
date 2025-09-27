@@ -64,9 +64,9 @@ The project uses the **Celo2048Leaderboard** smart contract to save scores and t
 ### Contract Functions
 
 - `saveScore(uint256 score, uint256 time)` – Save player score and time
-- `getBestScore(address player)` – Retrieve best score and time for a player
-- `getTotalScore(address player)` – Retrieve total score and games played
-- `getBestScores()` – Get leaderboard best scores
+- `getBestScores()` – Get leaderboard best scores (returns addresses, best scores, times)
+- `getTotalScores()` – Get leaderboard total scores (returns addresses, total scores, games played)
+
 1. **Open the app**
 	- [Live Demo](https://celo-2048.vercel.app/) or run locally at [http://localhost:3000](http://localhost:3000)
 
