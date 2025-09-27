@@ -219,7 +219,7 @@ export default function App() {
         }}>Connect Wallet</button>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
-          <p>Address: {shortAddress}</p>
+          <p>Addr: {shortAddress}</p>
           <button onClick={disconnectWallet} style={{
             padding: "6px 12px", cursor: "pointer",
             borderRadius: "8px", border: "1px solid #ddd", backgroundColor: "#f8f8f8"
@@ -227,21 +227,54 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ marginBottom: "20px" }}>
-        <label>Network: </label>
-        <select
-          value={network}
-          onChange={async (e) => {
-            const newNet = e.target.value;
-            await switchNetwork(newNet);
-            setNetwork(newNet);
-            const web3 = new Web3(window.ethereum);
-            setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[newNet].contractAddress));
-          }}
-        >
-          <option value="mainnet">Celo Mainnet</option>
-          <option value="sepolia">Celo Sepolia</option>
-        </select>
+      <div style={{
+        position: "absolute",
+        top: 24,
+        left: 24,
+        zIndex: 10,
+        display: "flex",
+        justifyContent: "flex-start"
+      }}>
+        <div style={{
+          background: "#fff",
+          borderRadius: "16px",
+          boxShadow: "0 4px 16px rgba(53,208,127,0.10)",
+          padding: "14px 28px",
+          display: "flex",
+          alignItems: "center",
+          gap: "18px",
+          minWidth: "220px"
+        }}>
+          <span style={{ fontWeight: "bold", fontSize: "15px", color: "#35d07f", marginRight: "8px", letterSpacing: "1px" }}>Network</span>
+          <select
+            value={network}
+            onChange={async (e) => {
+              const newNet = e.target.value;
+              await switchNetwork(newNet);
+              setNetwork(newNet);
+              const web3 = new Web3(window.ethereum);
+              setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[newNet].contractAddress));
+            }}
+            onKeyDown={e => e.preventDefault()}
+            style={{
+              padding: "10px 18px",
+              borderRadius: "10px",
+              border: "1.5px solid #35d07f",
+              backgroundColor: "#f7fff7",
+              color: "#222",
+              fontWeight: "bold",
+              fontSize: "16px",
+              boxShadow: "0 2px 8px rgba(53,208,127,0.08)",
+              outline: "none",
+              cursor: "pointer",
+              transition: "border 0.2s, box-shadow 0.2s",
+              width: "100%"
+            }}
+          >
+            <option value="mainnet">Celo Mainnet</option>
+            <option value="sepolia">Celo Sepolia</option>
+          </select>
+        </div>
       </div>
 
       <button onClick={fetchLeaderboard} style={{
