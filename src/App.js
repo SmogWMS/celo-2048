@@ -3,6 +3,7 @@ import GameBoard from "./GameBoard";
 import Web3 from "web3";
 import CeloClickerABI from "./CeloClicker.json";
 import celoLogo from "./assets/celo-logo.jpg";
+import { FiLogOut } from "react-icons/fi";
 
 /* --- Réseaux supportés --- */
 const NETWORKS = {
@@ -220,10 +221,25 @@ export default function App() {
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
           <p>Addr: {shortAddress}</p>
-          <button onClick={disconnectWallet} style={{
-            padding: "6px 12px", cursor: "pointer",
-            borderRadius: "8px", border: "1px solid #ddd", backgroundColor: "#f8f8f8"
-          }}>Disconnect</button>
+          <button
+            onClick={disconnectWallet}
+            title="Disconnect"
+            style={{
+              background: "none",
+              border: "none",
+              padding: "6px",
+              borderRadius: "50%",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background 0.2s"
+            }}
+            onMouseOver={e => e.currentTarget.style.background = "#f5b70022"}
+            onMouseOut={e => e.currentTarget.style.background = "none"}
+          >
+            <FiLogOut size={22} color="#f5b700" />
+          </button>
         </div>
       )}
 
