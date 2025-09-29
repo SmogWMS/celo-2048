@@ -46,22 +46,24 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
     const [gameOver, setGameOver] = useState(false);
 
     useEffect(() => {
-        const fetchBestScore = async () => {
-            if (!contract) return;
+        const fetchPlayerBestScore = async () => {
+            if (!contract || !account) return;
             try {
                 const bestRaw = await contract.methods.getBestScores().call();
-                if (bestRaw && bestRaw[1] && bestRaw[1].length > 0) {
-
-                    const scores = bestRaw[1].map(s => parseInt(s));
-                    const maxScore = Math.max(...scores);
-                    setBestScore(maxScore);
+                if (bestRaw && bestRaw[0] && bestRaw[1]) {
+                    const index = bestRaw[0].findIndex(addr => addr.toLowerCase() === account.toLowerCase());
+                    if (index !== -1) {
+                        setBestScore(parseInt(bestRaw[1][index]));
+                    } else {
+                        setBestScore(0);
+                    }
                 }
             } catch (err) {
-                console.error("Failed to fetch best score:", err);
+                console.error("Erreur récupération best score joueur :", err);
             }
         };
-        fetchBestScore();
-    }, [contract]);
+        fetchPlayerBestScore();
+    }, [contract, account]);
 
     // Réinitialise grille, score et timer si le mode ou la taille change
     useEffect(() => {
