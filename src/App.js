@@ -6,7 +6,7 @@ import Celo_2048_ABI from "./Celo2048_ABI.json";
 import celoLogo from "./assets/celo-logo.jpg";
 import { FiLogOut } from "react-icons/fi";
 import { NETWORKS } from "./constants/networks";
-import { sdk } from "@farcaster/miniapp-sdk"; 
+import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function App() {
   // Responsive detection for toast and selector
@@ -16,7 +16,7 @@ export default function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const [gameMode, setGameMode] = useState("classic"); 
+  const [gameMode, setGameMode] = useState("classic");
   const [account, setAccount] = useState(null);
   const [shortAddress, setShortAddress] = useState("");
   const [contract, setContract] = useState(null);
@@ -157,6 +157,7 @@ export default function App() {
             boxShadow: "0 4px 16px rgba(53,208,127,0.10)",
             padding: "12px 20px",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             gap: "12px",
             minWidth: "180px",
@@ -184,6 +185,30 @@ export default function App() {
             <option value="6x6">Variante 6x6</option>
             <option value="time">Time Attack (1 min)</option>
           </select>
+        </div>
+      )}
+
+      {/* Toast message */}
+      {!isMobile && (
+        <div
+          style={{
+            position: "absolute",
+            top: 120,
+            right: 20,
+            zIndex: 11,
+            backgroundColor: "#35d07f",
+            color: "#fff",
+            padding: "10px 20px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            fontWeight: "bold",
+            transition: "all 0.5s ease",
+            opacity: showToast ? 1 : 0,
+            transform: showToast ? "translateY(0)" : "translateY(-20px)",
+            pointerEvents: "none",
+          }}
+        >
+          {toastMessage}
         </div>
       )}
       {!isMobile && (
@@ -247,25 +272,7 @@ export default function App() {
         </div>
       )}
 
-      {showToast && (
-        <div
-          style={{
-            position: "fixed",
-            top: 20,
-            right: 20,
-            backgroundColor: "#35d07f",
-            color: "#fff",
-            padding: "10px 20px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-            fontWeight: "bold",
-            zIndex: 1000,
-            transition: "all 0.3s ease",
-          }}
-        >
-          {toastMessage}
-        </div>
-      )}
+      {/* ...existing code... (toast is now only rendered below selector) */}
 
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         <img src={celoLogo} alt="Celo Logo" style={{ width: "50px", height: "50px" }} />
