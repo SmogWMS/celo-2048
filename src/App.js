@@ -9,7 +9,13 @@ import { NETWORKS } from "./constants/networks";
 import { sdk } from "@farcaster/miniapp-sdk"; 
 
 export default function App() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 740);
+  // Responsive detection for toast and selector
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [gameMode, setGameMode] = useState("classic"); 
   const [account, setAccount] = useState(null);
   const [shortAddress, setShortAddress] = useState("");
@@ -32,9 +38,11 @@ export default function App() {
   }, []);
 
   const showNetworkToast = (msg) => {
-    setToastMessage(msg);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    if (!isMobile) {
+      setToastMessage(msg);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    }
   };
 
   const switchNetwork = async (net) => {
