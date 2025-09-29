@@ -24,7 +24,8 @@
     "accountAssociation": {
       "header": "eyJmaWQiOjExMTM1MTYsInR5cGUiOiJhdXRoIiwia2V5IjoiMHgwOWREN2NiODhDMURFMTkzY0E5QkU1ZUVFMzU2ODYzNTEwOTE2YTlEIn0",
       "payload": "eyJkb21haW4iOiJjZWxvLTIwNDgudmVyY2VsLmFwcCJ9",
-      "signature": "3F1bvzNo1/gfzyZEhxGibwCuVQsyiCU+gK7tfKMpN7lsRHe+lWSNJ1JS4f0kr4SNP0IKYiX+bLUQ62OfiGdsSRs="
+      "signature": "3F1bvzNo1/gfzyZEhxGibwCuVQsyiCU+gK7tfKMpN7lsRHe+lWSNJ1JS4f0kr4SNP0IKYiX+bLUQ62OfiGdsSRs=",
+      "type": "farcaster_account"
     }
   }
 }
