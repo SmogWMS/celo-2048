@@ -272,8 +272,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ...existing code... (toast is now only rendered below selector) */}
-
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         <img src={celoLogo} alt="Celo Logo" style={{ width: "50px", height: "50px" }} />
         <h1>Celo 2048</h1>

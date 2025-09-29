@@ -40,28 +40,42 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
     const [grid, setGrid] = useState(() => addRandomTile(addRandomTile(emptyGrid(size))));
     const [mergedGrid, setMergedGrid] = useState(() => emptyGrid(size));
     const [score, setScore] = useState(0);
+    const [bestScore, setBestScore] = useState(0);
     const [timer, setTimer] = useState(0);
     const [timerActive, setTimerActive] = useState(false);
     const [gameOver, setGameOver] = useState(false);
-    const [scoreSavedState, setScoreSavedState] = useState(false);
 
-    // Reset grid, score, and timer when mode or size changes
+    useEffect(() => {
+        const fetchBestScore = async () => {
+            if (!contract) return;
+            try {
+                const bestRaw = await contract.methods.getBestScores().call();
+                if (bestRaw && bestRaw[1] && bestRaw[1].length > 0) {
+
+                    const scores = bestRaw[1].map(s => parseInt(s));
+                    const maxScore = Math.max(...scores);
+                    setBestScore(maxScore);
+                }
+            } catch (err) {
+                console.error("Failed to fetch best score:", err);
+            }
+        };
+        fetchBestScore();
+    }, [contract]);
+
+    // Réinitialise grille, score et timer si le mode ou la taille change
     useEffect(() => {
         setGrid(addRandomTile(addRandomTile(emptyGrid(size))));
         setMergedGrid(emptyGrid(size));
         setScore(0);
         setGameOver(false);
-        setScoreSavedState(false);
-
-        // Reset timer: Classic/6x6 = 0, Time Attack = 0 (count up to 60)
         setTimer(0);
         setTimerActive(false);
     }, [size, gameMode]);
 
-    // Unified timer effect
+    // Timer effect
     useEffect(() => {
         if (!timerActive || gameOver) return;
-
         const interval = setInterval(() => {
             setTimer(prev => {
                 if (gameMode === "time" && prev >= 59) {
@@ -73,7 +87,6 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
                 return prev + 1;
             });
         }, 1000);
-
         return () => clearInterval(interval);
     }, [timerActive, gameOver, gameMode]);
 
@@ -96,7 +109,11 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
         const result = moveGrid(grid, dir);
         if (!result) return;
 
-        setScore(prev => prev + result.gainedScore);
+        setScore(prev => {
+            const newScore = prev + result.gainedScore;
+            if (newScore > bestScore) setBestScore(newScore);
+            return newScore;
+        });
 
         if (JSON.stringify(result.grid) !== JSON.stringify(grid)) {
             setGrid(addRandomTile(result.grid));
@@ -135,8 +152,13 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
 
     return (
         <>
+            {/* Game Over Popup */}
             {gameOver && (
-                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 100 }}>
+                <div style={{
+                    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: "rgba(0,0,0,0.7)", display: "flex",
+                    justifyContent: "center", alignItems: "center", zIndex: 100
+                }}>
                     <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", textAlign: "center", width: "300px" }}>
                         <h2>Game Over !</h2>
                         <p>Score: {score}</p>
@@ -157,11 +179,50 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
                 </div>
             )}
 
-            <div style={{ display: "flex", gap: "20px", justifyContent: "center", marginBottom: "20px", fontWeight: "bold" }}>
-                <p>Score: {score}</p>
-                {gameMode === "time" ? <p>Time remaining: {Math.max(0, 60 - timer)}s</p> : <p>Time: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>}
+            {/* Score / Best Score / Time Panel */}
+            <div style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "20px",
+                marginBottom: "15px",
+            }}>
+                {/** Score */}
+                <div style={{
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    background: "#fff", padding: "6px 12px", borderRadius: "10px",
+                    boxShadow: "0 3px 8px rgba(0,0,0,0.1)", minWidth: "60px",
+                }}>
+                    <span style={{ fontSize: "12px", fontWeight: "bold", color: "#666" }}>Score</span>
+                    <span style={{ fontSize: "16px", fontWeight: "bold", color: "#222" }}>{score}</span>
+                </div>
+
+                {/** Best Score */}
+                <div style={{
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    background: "#fff", padding: "6px 12px", borderRadius: "10px",
+                    boxShadow: "0 3px 8px rgba(0,0,0,0.1)", minWidth: "60px",
+                }}>
+                    <span style={{ fontSize: "12px", fontWeight: "bold", color: "#666" }}>Best Score</span>
+                    <span style={{ fontSize: "16px", fontWeight: "bold", color: "#222" }}>{bestScore}</span>
+                </div>
+
+                {/** Time */}
+                <div style={{
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    background: "#fff", padding: "6px 12px", borderRadius: "10px",
+                    boxShadow: "0 3px 8px rgba(0,0,0,0.1)", minWidth: "60px",
+                }}>
+                    <span style={{ fontSize: "12px", fontWeight: "bold", color: "#666" }}>Time</span>
+                    <span style={{ fontSize: "16px", fontWeight: "bold", color: "#222" }}>
+                        {gameMode === "time"
+                            ? `${Math.max(0, 60 - timer)}s`
+                            : `${Math.floor(timer / 60)}:${(timer % 60).toString().padStart(2, "0")}`}
+                    </span>
+                </div>
             </div>
 
+            {/* Game Board Grid */}
             <div
                 className="game-board-grid"
                 style={{
@@ -177,7 +238,9 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
-                {grid.map((row, i) => row.map((val, j) => <Tile key={`${i}-${j}`} value={val} merged={mergedGrid[i][j]} />))}
+                {grid.map((row, i) => row.map((val, j) => (
+                    <Tile key={`${i}-${j}`} value={val} merged={mergedGrid[i][j]} />
+                )))}
             </div>
         </>
     );
