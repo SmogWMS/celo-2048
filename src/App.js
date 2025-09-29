@@ -225,19 +225,20 @@ export default function App() {
               <option value="sepolia">Celo Sepolia</option>
             </select>
           </div>
-        </div>
-      )}
-
-    {network === "sepolia" && (
+          {network === "sepolia" && (
       <a
         href="https://faucet.celo.org/celo-sepolia"
         target="_blank"
         rel="noopener noreferrer"
         style={{ fontSize: "14px", color: "#35d07f", textDecoration: "underline" }}
       >
-        Click here to claim testnet CELO and start playing
+        Claim testnet CELO and start playing
       </a>
     )}
+        </div>
+      )}
+
+    
 
       {/* Toast */}
       {showToast && (
