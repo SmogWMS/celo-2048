@@ -8,7 +8,7 @@ import { FiLogOut } from "react-icons/fi";
 import { NETWORKS } from "./constants/networks";
 
 export default function App() {
-  // Detect mobile device
+  
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 740);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 740);

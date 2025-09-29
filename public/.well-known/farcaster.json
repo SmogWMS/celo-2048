@@ -1,5 +1,6 @@
 {
   "miniapp": {
+    "version": "1",
     "name": "2048 Celo",
     "homeUrl": "https://celo-2048.vercel.app",
     "iconUrl": "https://celo-2048.vercel.app/celo-2048-logo.png",
@@ -10,8 +11,13 @@
     "screenshotUrls": [
       "https://celo-2048.vercel.app/celo-2048-logo.png"
     ],
-    "primaryCategory": "game",
-    "tags": ["game", "2048", "Celo", "puzzle"],
+    "primaryCategory": "games",
+    "tags": [
+      "game",
+      "2048",
+      "Celo",
+      "puzzle"
+    ],
     "ogTitle": "2048 Celo Mini App",
     "ogDescription": "Play 2048 inside Farcaster!",
     "ogImageUrl": "https://celo-2048.vercel.app/celo-2048-logo.png"
