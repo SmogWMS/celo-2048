@@ -145,7 +145,7 @@ export default function App() {
       }}
     >
       {/* Selecteur de mode de jeu */}
-      {!isMobile && (
+      {/* {!isMobile && (
         <div
           style={{
             position: "absolute",
@@ -186,7 +186,7 @@ export default function App() {
             <option value="time">Time Attack (1 min)</option>
           </select>
         </div>
-      )}
+      )} */}
 
       {/* Toast message */}
       {!isMobile && (
