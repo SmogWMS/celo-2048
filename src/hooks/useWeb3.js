@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Web3 from "web3";
-import CeloClickerABI from "../CeloClicker.json";
+import Celo_2048_ABI from "../Celo2048_ABI.json";
 
 export const NETWORKS = {
   mainnet: {
@@ -44,7 +44,7 @@ export default function useWeb3(defaultNetwork = "mainnet") {
 
     setAccount(accounts[0]);
     setShortAddress(accounts[0].slice(0, 6) + "..." + accounts[0].slice(-4));
-    setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[network].contractAddress));
+    setContract(new web3.eth.Contract(Celo_2048_ABI, NETWORKS[network].contractAddress));
 
     localStorage.setItem("connectedAccount", accounts[0]);
   } catch (e) {
@@ -66,7 +66,7 @@ export default function useWeb3(defaultNetwork = "mainnet") {
       setAccount(storedAccount);
       setShortAddress(storedAccount.slice(0,6) + "..." + storedAccount.slice(-4));
       const web3 = new Web3(window.ethereum);
-      setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[defaultNetwork].contractAddress));
+      setContract(new web3.eth.Contract(Celo_2048_ABI, NETWORKS[defaultNetwork].contractAddress));
     }
   }, []);
 

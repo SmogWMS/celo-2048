@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Web3 from "web3";
 import GameBoard from "./components/GameBoard";
 import LeaderboardPopup from "./components/LeaderboardPopup";
-import CeloClickerABI from "./CeloClicker.json";
+import Celo_2048_ABI from "./Celo2048_ABI.json";
 import celoLogo from "./assets/celo-logo.jpg";
 import { FiLogOut } from "react-icons/fi";
 import { NETWORKS } from "./constants/networks";
@@ -72,7 +72,7 @@ export default function App() {
       const web3 = new Web3(window.ethereum);
       setAccount(accounts[0]);
       setShortAddress(accounts[0].slice(0, 6) + "..." + accounts[0].slice(-4));
-      setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[network].contractAddress));
+      setContract(new web3.eth.Contract(Celo_2048_ABI, NETWORKS[network].contractAddress));
       localStorage.setItem("connectedAccount", accounts[0]);
     } catch (e) {
       if (e.code !== 4001) console.error(e);
@@ -94,7 +94,7 @@ export default function App() {
         const web3 = new Web3(window.ethereum);
         setAccount(storedAccount);
         setShortAddress(storedAccount.slice(0, 6) + "..." + storedAccount.slice(-4));
-        setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[network].contractAddress));
+        setContract(new web3.eth.Contract(Celo_2048_ABI, NETWORKS[network].contractAddress));
       };
       init();
     }
@@ -105,7 +105,7 @@ export default function App() {
   const fetchLeaderboard = async () => {
     try {
       const web3 = new Web3(NETWORKS[network].rpcUrls[0]);
-      const readOnlyContract = new web3.eth.Contract(CeloClickerABI, NETWORKS[network].contractAddress);
+      const readOnlyContract = new web3.eth.Contract(Celo_2048_ABI, NETWORKS[network].contractAddress);
 
       const bestRaw = await readOnlyContract.methods.getBestScores().call();
       const totalRaw = await readOnlyContract.methods.getTotalScores().call();
@@ -213,7 +213,7 @@ export default function App() {
                 await switchNetwork(newNet);
                 if (account) {
                   const web3 = new Web3(window.ethereum);
-                  setContract(new web3.eth.Contract(CeloClickerABI, NETWORKS[newNet].contractAddress));
+                  setContract(new web3.eth.Contract(Celo_2048_ABI, NETWORKS[newNet].contractAddress));
                 }
               }}
               onKeyDown={e => e.preventDefault()}
