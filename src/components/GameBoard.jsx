@@ -1,48 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Tile from "./Tile";
 import { getSize, emptyGrid, addRandomTile, isGameOver, moveGrid } from "../utils/gameLogic";
 
 export default function GameBoard({ account, contract, scoreSaved, setScoreSaved, connectWallet, gameMode }) {
-    // Mobile swipe 
-    const touchStartRef = React.useRef(null);
-    const touchEndRef = React.useRef(null);
+    // Mobile swipe
+    const touchStartRef = useRef(null);
+    const touchEndRef = useRef(null);
 
     const getSwipeDirection = (start, end) => {
         if (!start || !end) return null;
         const dx = end.x - start.x;
         const dy = end.y - start.y;
         if (Math.abs(dx) > Math.abs(dy)) {
-            if (dx > 30) return 'right';
-            if (dx < -30) return 'left';
+            if (dx > 30) return "right";
+            if (dx < -30) return "left";
         } else {
-            if (dy > 30) return 'down';
-            if (dy < -30) return 'up';
+            if (dy > 30) return "down";
+            if (dy < -30) return "up";
         }
         return null;
     };
 
     const handleTouchStart = (e) => {
         if (e.touches && e.touches.length === 1) {
-            touchStartRef.current = {
-                x: e.touches[0].clientX,
-                y: e.touches[0].clientY,
-            };
+            touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }
     };
 
     const handleTouchEnd = (e) => {
         if (e.changedTouches && e.changedTouches.length === 1) {
-            touchEndRef.current = {
-                x: e.changedTouches[0].clientX,
-                y: e.changedTouches[0].clientY,
-            };
+            touchEndRef.current = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
             const direction = getSwipeDirection(touchStartRef.current, touchEndRef.current);
-            if (direction) {
-                handleMove(direction);
-            }
+            if (direction) handleMove(direction);
         }
     };
-
 
     const size = getSize(gameMode);
 
@@ -52,48 +43,43 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
     const [timer, setTimer] = useState(0);
     const [timerActive, setTimerActive] = useState(false);
     const [gameOver, setGameOver] = useState(false);
-
-    // Time Attack mode: 1 min timer
-    useEffect(() => {
-        if (gameMode !== "time") return;
-        if (!timerActive || gameOver) return;
-        if (timer >= 60) {
-            setGameOver(true);
-            setTimerActive(false);
-            return;
-        }
-        const interval = setInterval(() => setTimer(t => t + 1), 1000);
-        return () => clearInterval(interval);
-    }, [timerActive, gameOver, timer, gameMode]);
-
-    // Classic/6x6 mode timer
-    useEffect(() => {
-        if (gameMode === "time") return;
-        if (!timerActive || gameOver) return;
-        const interval = setInterval(() => setTimer(t => t + 1), 1000);
-        return () => clearInterval(interval);
-    }, [timerActive, gameOver, gameMode]);
     const [scoreSavedState, setScoreSavedState] = useState(false);
 
+    // Reset grid, score, and timer when mode or size changes
     useEffect(() => {
         setGrid(addRandomTile(addRandomTile(emptyGrid(size))));
         setMergedGrid(emptyGrid(size));
         setScore(0);
-        setTimer(0);
-        setTimerActive(false);
         setGameOver(false);
         setScoreSavedState(false);
-    }, [size]);
 
+        // Reset timer: Classic/6x6 = 0, Time Attack = 0 (count up to 60)
+        setTimer(0);
+        setTimerActive(false);
+    }, [size, gameMode]);
+
+    // Unified timer effect
     useEffect(() => {
         if (!timerActive || gameOver) return;
 
-        const interval = setInterval(() => setTimer(t => t + 1), 1000);
-        return () => clearInterval(interval);
-    }, [timerActive, gameOver]);
+        const interval = setInterval(() => {
+            setTimer(prev => {
+                if (gameMode === "time" && prev >= 59) {
+                    clearInterval(interval);
+                    setGameOver(true);
+                    setTimerActive(false);
+                    return 60;
+                }
+                return prev + 1;
+            });
+        }, 1000);
 
+        return () => clearInterval(interval);
+    }, [timerActive, gameOver, gameMode]);
+
+    // Keyboard controls
     useEffect(() => {
-        const handleKey = e => {
+        const handleKey = (e) => {
             if (gameOver) return;
             if (e.key === "ArrowLeft") handleMove("left");
             if (e.key === "ArrowRight") handleMove("right");
@@ -173,11 +159,7 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
 
             <div style={{ display: "flex", gap: "20px", justifyContent: "center", marginBottom: "20px", fontWeight: "bold" }}>
                 <p>Score: {score}</p>
-                {gameMode === "time" ? (
-                    <p>Time remaining: {Math.max(0, 60 - timer)}s</p>
-                ) : (
-                    <p>Time: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
-                )}
+                {gameMode === "time" ? <p>Time remaining: {Math.max(0, 60 - timer)}s</p> : <p>Time: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>}
             </div>
 
             <div
@@ -190,7 +172,7 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
                     padding: window.innerWidth <= 600 ? "8px" : "16px",
                     borderRadius: "12px",
                     boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
-                    justifyContent: "center"
+                    justifyContent: "center",
                 }}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
