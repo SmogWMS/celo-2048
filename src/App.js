@@ -6,16 +6,11 @@ import CeloClickerABI from "./CeloClicker.json";
 import celoLogo from "./assets/celo-logo.jpg";
 import { FiLogOut } from "react-icons/fi";
 import { NETWORKS } from "./constants/networks";
+import { sdk } from "@farcaster/miniapp-sdk"; 
 
 export default function App() {
-  
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 740);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 740);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  const [gameMode, setGameMode] = useState("classic"); // classic, 6x6, time
+  const [gameMode, setGameMode] = useState("classic"); 
   const [account, setAccount] = useState(null);
   const [shortAddress, setShortAddress] = useState("");
   const [contract, setContract] = useState(null);
@@ -23,10 +18,18 @@ export default function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState({ bestScores: [], totalScores: [] });
   const [scoreSaved, setScoreSaved] = useState(false);
-
-  // Toast notification
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
+
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 740);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const showNetworkToast = (msg) => {
     setToastMessage(msg);
@@ -34,7 +37,6 @@ export default function App() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Switch network
   const switchNetwork = async (net) => {
     if (!window.ethereum) return;
     try {
@@ -54,7 +56,6 @@ export default function App() {
     }
   };
 
-  // Connect wallet
   const connectWallet = async () => {
     if (!window.ethereum) return alert("Please install MetaMask");
     try {
@@ -93,7 +94,6 @@ export default function App() {
 
   const handleNewGame = () => setScoreSaved(false);
 
-  // Leaderboard
   const fetchLeaderboard = async () => {
     try {
       const web3 = new Web3(NETWORKS[network].rpcUrls[0]);
@@ -136,48 +136,7 @@ export default function App() {
         position: "relative",
       }}
     >
-      {/* Game mode selector top-right */}
-      {/* <div
-        style={{
-          position: "absolute",
-          top: 20,
-          right: 20,
-          zIndex: 10,
-          background: "#fff",
-          borderRadius: "16px",
-          boxShadow: "0 4px 16px rgba(53,208,127,0.10)",
-          padding: "12px 20px",
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          minWidth: "180px",
-        }}
-      >
-        <span style={{ fontWeight: "bold", fontSize: "14px", color: "#35d07f" }}>Game Mode:</span>
-        <select
-          value={gameMode}
-          onChange={e => setGameMode(e.target.value)}
-          onKeyDown={e => e.preventDefault()}
-          style={{
-            padding: "6px 12px",
-            borderRadius: "8px",
-            border: "1.5px solid #35d07f",
-            backgroundColor: "#f7fff7",
-            color: "#222",
-            fontWeight: "bold",
-            fontSize: "14px",
-            cursor: "pointer",
-            outline: "none",
-            width: "100%",
-          }}
-        >
-            <option value="classic">Classic 4x4</option>
-            <option value="6x6">Variante 6x6</option>
-            <option value="time">Time Attack (1 min)</option>
-        </select>
-      </div> */}
-      {/* Network selector top-left */}
-  {!isMobile && (
+      {!isMobile && (
         <div
           style={{
             position: "absolute",
@@ -226,21 +185,18 @@ export default function App() {
             </select>
           </div>
           {network === "sepolia" && (
-      <a
-        href="https://faucet.celo.org/celo-sepolia"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ fontSize: "14px", color: "#35d07f", textDecoration: "underline" }}
-      >
-        Claim testnet CELO and start playing
-      </a>
-    )}
+            <a
+              href="https://faucet.celo.org/celo-sepolia"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: "14px", color: "#35d07f", textDecoration: "underline" }}
+            >
+              Claim testnet CELO and start playing
+            </a>
+          )}
         </div>
       )}
 
-    
-
-      {/* Toast */}
       {showToast && (
         <div
           style={{
@@ -261,13 +217,11 @@ export default function App() {
         </div>
       )}
 
-      {/* Logo & Title */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         <img src={celoLogo} alt="Celo Logo" style={{ width: "50px", height: "50px" }} />
         <h1>Celo 2048</h1>
       </div>
 
-      {/* Wallet */}
       {!account ? (
         <button
           onClick={connectWallet}
@@ -288,7 +242,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Leaderboard button */}
       <button
         onClick={fetchLeaderboard}
         style={{ padding: "8px 16px", backgroundColor: "#f5b700", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", marginBottom: "20px" }}
@@ -296,7 +249,6 @@ export default function App() {
         Leaderboards
       </button>
 
-      {/* GameBoard */}
       <GameBoard
         handleNewGame={handleNewGame}
         account={account}
@@ -309,7 +261,6 @@ export default function App() {
         gameMode={gameMode}
       />
 
-      {/* Leaderboard popup */}
       {showLeaderboard && <LeaderboardPopup leaderboardData={leaderboardData} onClose={() => setShowLeaderboard(false)} />}
     </div>
   );
