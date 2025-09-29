@@ -145,7 +145,7 @@ export default function App() {
       }}
     >
       {/* Selecteur de mode de jeu */}
-      {!isMobile && (
+      {/* {!isMobile && (
         <div
           style={{
             position: "absolute",
@@ -186,7 +186,7 @@ export default function App() {
             <option value="time">Time Attack (1 min)</option>
           </select>
         </div>
-      )}
+      )} */}
 
       {/* Toast message */}
       {!isMobile && (
@@ -271,7 +271,7 @@ export default function App() {
           )}
         </div>
       )}
-
+      
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         <img src={celoLogo} alt="Celo Logo" style={{ width: "50px", height: "50px" }} />
         <h1>Celo 2048</h1>
