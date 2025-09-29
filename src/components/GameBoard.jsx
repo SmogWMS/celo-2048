@@ -52,6 +52,27 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
     const [timer, setTimer] = useState(0);
     const [timerActive, setTimerActive] = useState(false);
     const [gameOver, setGameOver] = useState(false);
+
+    // Time Attack mode: 1 min timer
+    useEffect(() => {
+        if (gameMode !== "time") return;
+        if (!timerActive || gameOver) return;
+        if (timer >= 60) {
+            setGameOver(true);
+            setTimerActive(false);
+            return;
+        }
+        const interval = setInterval(() => setTimer(t => t + 1), 1000);
+        return () => clearInterval(interval);
+    }, [timerActive, gameOver, timer, gameMode]);
+
+    // Classic/6x6 mode timer
+    useEffect(() => {
+        if (gameMode === "time") return;
+        if (!timerActive || gameOver) return;
+        const interval = setInterval(() => setTimer(t => t + 1), 1000);
+        return () => clearInterval(interval);
+    }, [timerActive, gameOver, gameMode]);
     const [scoreSavedState, setScoreSavedState] = useState(false);
 
     useEffect(() => {
@@ -152,7 +173,11 @@ export default function GameBoard({ account, contract, scoreSaved, setScoreSaved
 
             <div style={{ display: "flex", gap: "20px", justifyContent: "center", marginBottom: "20px", fontWeight: "bold" }}>
                 <p>Score: {score}</p>
-                <p>Time: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
+                {gameMode === "time" ? (
+                    <p>Time remaining: {Math.max(0, 60 - timer)}s</p>
+                ) : (
+                    <p>Time: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, "0")}</p>
+                )}
             </div>
 
             <div

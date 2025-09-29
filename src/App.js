@@ -144,6 +144,48 @@ export default function App() {
         position: "relative",
       }}
     >
+      {/* Selecteur de mode de jeu */}
+      {!isMobile && (
+        <div
+          style={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            zIndex: 10,
+            background: "#fff",
+            borderRadius: "16px",
+            boxShadow: "0 4px 16px rgba(53,208,127,0.10)",
+            padding: "12px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            minWidth: "180px",
+          }}
+        >
+          <span style={{ fontWeight: "bold", fontSize: "14px", color: "#35d07f" }}>Game Mode:</span>
+          <select
+            value={gameMode}
+            onChange={e => setGameMode(e.target.value)}
+            onKeyDown={e => e.preventDefault()}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "8px",
+              border: "1.5px solid #35d07f",
+              backgroundColor: "#f7fff7",
+              color: "#222",
+              fontWeight: "bold",
+              fontSize: "14px",
+              cursor: "pointer",
+              outline: "none",
+              width: "100%",
+            }}
+          >
+            <option value="classic">Classic 4x4</option>
+            <option value="6x6">Variante 6x6</option>
+            <option value="time">Time Attack (1 min)</option>
+          </select>
+        </div>
+      )}
       {!isMobile && (
         <div
           style={{
