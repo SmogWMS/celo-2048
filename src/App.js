@@ -28,29 +28,58 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
-  // ✅ Farcaster: ready + pop-up "Add Mini App"
   useEffect(() => {
-    async function initFarcaster() {
-      try {
-        await sdk.actions.ready(); 
-        
-        sdk.actions.disableNativeGestures();
+    let mounted = true;
 
+    async function initFarcaster() {
+      if (!sdk || !sdk.actions) {
+        console.warn("Farcaster SDK not available (not running inside a Farcaster client?)");
+        return;
+      }
+
+      try {
+        await sdk.actions.ready({ disableNativeGestures: true });
+        console.log("Farcaster ready called with disableNativeGestures");
+
+        let context = null;
+        try {
+          context = await sdk.context.get();
+          console.log("Farcaster context:", context);
+        } catch (ctxErr) {
+          console.warn("Could not get Farcaster context:", ctxErr);
+        }
+
+        const clientAddedFlag = context?.client?.added;
         const alreadyAsked = localStorage.getItem("farcasterPromptShown");
-        if (!alreadyAsked) {
+
+        if (mounted && clientAddedFlag === false && !alreadyAsked) {
           const confirmAdd = window.confirm(
             "Add Celo 2048 to your Farcaster Mini Apps for quick access?"
           );
+
           if (confirmAdd) {
-            await sdk.actions.addMiniApp();
+            try {
+              await sdk.actions.addMiniApp();
+              console.log("User added the mini app (addMiniApp resolved)");
+            } catch (addErr) {
+              console.error("addMiniApp failed:", addErr);
+              alert("Could not add mini app: " + (addErr?.message || addErr));
+            }
           }
+
           localStorage.setItem("farcasterPromptShown", "true");
         }
       } catch (err) {
-        console.error("Farcaster SDK error:", err);
+        console.error("Farcaster SDK init error:", err);
+
       }
     }
+
     initFarcaster();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const showNetworkToast = (msg) => {
