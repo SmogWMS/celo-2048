@@ -9,13 +9,14 @@ import { NETWORKS } from "./constants/networks";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function App() {
-  // Responsive detection for toast and selector
+  // Responsive detection
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 600);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
   const [gameMode, setGameMode] = useState("classic");
   const [account, setAccount] = useState(null);
   const [shortAddress, setShortAddress] = useState("");
@@ -27,14 +28,29 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
+  // ✅ Farcaster: ready + pop-up "Add Mini App"
   useEffect(() => {
-    sdk.actions.ready();
-  }, []);
+    async function initFarcaster() {
+      try {
+        await sdk.actions.ready(); 
+        
+        sdk.actions.disableNativeGestures();
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 740);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+        const alreadyAsked = localStorage.getItem("farcasterPromptShown");
+        if (!alreadyAsked) {
+          const confirmAdd = window.confirm(
+            "Add Celo 2048 to your Farcaster Mini Apps for quick access?"
+          );
+          if (confirmAdd) {
+            await sdk.actions.addMiniApp();
+          }
+          localStorage.setItem("farcasterPromptShown", "true");
+        }
+      } catch (err) {
+        console.error("Farcaster SDK error:", err);
+      }
+    }
+    initFarcaster();
   }, []);
 
   const showNetworkToast = (msg) => {
@@ -144,50 +160,6 @@ export default function App() {
         position: "relative",
       }}
     >
-      {/* Selecteur de mode de jeu */}
-      {/* {!isMobile && (
-        <div
-          style={{
-            position: "absolute",
-            top: 20,
-            right: 20,
-            zIndex: 10,
-            background: "#fff",
-            borderRadius: "16px",
-            boxShadow: "0 4px 16px rgba(53,208,127,0.10)",
-            padding: "12px 20px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "12px",
-            minWidth: "180px",
-          }}
-        >
-          <span style={{ fontWeight: "bold", fontSize: "14px", color: "#35d07f" }}>Game Mode:</span>
-          <select
-            value={gameMode}
-            onChange={e => setGameMode(e.target.value)}
-            onKeyDown={e => e.preventDefault()}
-            style={{
-              padding: "6px 12px",
-              borderRadius: "8px",
-              border: "1.5px solid #35d07f",
-              backgroundColor: "#f7fff7",
-              color: "#222",
-              fontWeight: "bold",
-              fontSize: "14px",
-              cursor: "pointer",
-              outline: "none",
-              width: "100%",
-            }}
-          >
-            <option value="classic">Classic 4x4</option>
-            <option value="6x6">Variante 6x6</option>
-            <option value="time">Time Attack (1 min)</option>
-          </select>
-        </div>
-      )} */}
-
       {/* Toast message */}
       {!isMobile && (
         <div
@@ -211,6 +183,8 @@ export default function App() {
           {toastMessage}
         </div>
       )}
+
+      {/* Network selector */}
       {!isMobile && (
         <div
           style={{
@@ -271,7 +245,7 @@ export default function App() {
           )}
         </div>
       )}
-      
+
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         <img src={celoLogo} alt="Celo Logo" style={{ width: "50px", height: "50px" }} />
         <h1>Celo 2048</h1>
@@ -316,7 +290,9 @@ export default function App() {
         gameMode={gameMode}
       />
 
-      {showLeaderboard && <LeaderboardPopup leaderboardData={leaderboardData} onClose={() => setShowLeaderboard(false)} />}
+      {showLeaderboard && (
+        <LeaderboardPopup leaderboardData={leaderboardData} onClose={() => setShowLeaderboard(false)} />
+      )}
     </div>
   );
 }
