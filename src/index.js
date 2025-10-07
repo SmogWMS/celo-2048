@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-import { sdk } from "@farcaster/miniapp-sdk";
 import { AppKitProvider } from "./librairies/appKit";
 import ConnectButton from "./components/ConnectButton";
 import GameBoard from "./components/GameBoard";
 import LeaderboardPopup from "./components/LeaderboardPopup";
 import celoLogo from "./assets/celo-logo.jpg";
 import "./index.css";
+import Web3 from "web3";
+import Celo_2048_ABI from "./Celo2048_ABI.json";
 
 function Root() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -14,43 +15,48 @@ function Root() {
     bestScores: [],
     totalScores: [],
   });
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
-  // Responsive
+  // Récupérer scores depuis le smart contract
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 600);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    async function fetchLeaderboard() {
+      if (!window.ethereum) return;
 
-  // Init Farcaster SDK
-  useEffect(() => {
-    async function initFarcaster() {
-      if (!sdk?.actions) return;
       try {
-        await sdk.actions.ready({ disableNativeGestures: true });
-        const context = await sdk.context.get().catch(() => null);
+        const web3 = new Web3(window.ethereum);
+        const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS_CELO_SEPOLIA;
+        const contract = new web3.eth.Contract(Celo_2048_ABI, contractAddress);
 
-        if (context?.client?.added === false && !localStorage.getItem("farcasterPromptShown")) {
-          const confirmAdd = window.confirm(
-            "Add Celo 2048 to your Farcaster Mini Apps for quick access?"
-          );
-          if (confirmAdd) {
-            try {
-              await sdk.actions.addMiniApp();
-              console.log("Mini App added");
-            } catch (e) {
-              console.error("addMiniApp failed", e);
-            }
-          }
-          localStorage.setItem("farcasterPromptShown", "true");
-        }
-      } catch (e) {
-        console.warn("Farcaster SDK error", e);
+        // Best Scores
+        const bestRaw = await contract.methods.getBestScores().call();
+        const bestAddrs = bestRaw[0];
+        const bestScoresArr = bestRaw[1];
+        const bestTimes = bestRaw[2];
+
+        const bestScores = bestAddrs.map((addr, i) => ({
+          player: addr,
+          score: parseInt(bestScoresArr[i]),
+          time: parseInt(bestTimes[i]),
+        }));
+
+        // Total Scores
+        const totalRaw = await contract.methods.getTotalScores().call();
+        const totalAddrs = totalRaw[0];
+        const totalScoresArr = totalRaw[1];
+        const totalGames = totalRaw[2];
+
+        const totalScores = totalAddrs.map((addr, i) => ({
+          player: addr,
+          scoreTotal: parseInt(totalScoresArr[i]),
+          gamesPlayed: parseInt(totalGames[i]),
+        }));
+
+        setLeaderboardData({ bestScores, totalScores });
+      } catch (err) {
+        console.error("Erreur récupération leaderboard:", err);
       }
     }
 
-    initFarcaster();
+    fetchLeaderboard();
   }, []);
 
   return (
@@ -90,7 +96,7 @@ function Root() {
         Leaderboards
       </button>
 
-      {/* Jeu principal */}
+      {/* GameBoard */}
       <GameBoard />
 
       {/* Popup leaderboard */}
